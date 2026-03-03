@@ -1,0 +1,1355 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const clubName = 'AI Together';
+const clubTag = 'London community club';
+---
+
+<Layout>
+	<div class="page">
+		<header class="top">
+			<div class="top-inner">
+				<a class="brand" href="#top" aria-label={`${clubName} home`}>
+					<span class="brand-mark" aria-hidden="true">
+						<span class="dot dot-a"></span>
+						<span class="dot dot-b"></span>
+						<span class="dot dot-c"></span>
+					</span>
+					<span class="brand-text">
+						<span class="brand-name">{clubName}</span>
+						<span class="brand-tag">{clubTag}</span>
+					</span>
+				</a>
+
+				<nav class="nav" aria-label="Primary">
+					<a href="#what">What we do</a>
+					<a href="#who">Who it’s for</a>
+					<a href="#how">How it works</a>
+					<a href="#details">Meeting details</a>
+				</nav>
+
+				<a class="btn btn-primary btn-small" href="#signup">Join our next session</a>
+			</div>
+		</header>
+
+		<main id="top" class="main">
+			<section class="hero">
+				<div class="hero-grid">
+					<div class="hero-copy">
+						<p class="eyebrow">Small group • Fortnightly • Free • London</p>
+						<h1 class="h1">
+							Learn AI Together —
+							<span class="h1-soft">A London community for hands-on AI practice</span>
+						</h1>
+						<p class="lead">
+							Join a small, friendly group of Londoners who meet regularly to explore AI tools, share
+							tips, and build skills together. No experience needed.
+						</p>
+
+						<div class="hero-actions">
+							<a class="btn btn-primary" href="#signup">
+								Join Our Next Session
+								<span class="btn-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path
+											d="M7 17L17 7"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+										<path
+											d="M9 7H17V15"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										/>
+									</svg>
+								</span>
+							</a>
+							<a class="btn btn-ghost" href="#what">See what we do</a>
+						</div>
+
+						<div class="hero-badges" aria-label="Highlights">
+							<div class="badge">
+								<span class="badge-ico" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path
+											d="M8 6V4.5C8 3.67 8.67 3 9.5 3H14.5C15.33 3 16 3.67 16 4.5V6"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+										<path
+											d="M7 6H17C18.1 6 19 6.9 19 8V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V8C5 6.9 5.9 6 7 6Z"
+											stroke="currentColor"
+											stroke-width="2"
+										/>
+										<path
+											d="M8 11H16"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+										<path
+											d="M8 15H13"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+									</svg>
+								</span>
+								<div class="badge-text">
+									<div class="badge-title">Practical sessions</div>
+									<div class="badge-sub">Prompts, workflows, real use-cases</div>
+								</div>
+							</div>
+
+							<div class="badge">
+								<span class="badge-ico" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path
+											d="M12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21Z"
+											stroke="currentColor"
+											stroke-width="2"
+										/>
+										<path
+											d="M8.2 13.2L10.7 15.7L16.2 10.2"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										/>
+									</svg>
+								</span>
+								<div class="badge-text">
+									<div class="badge-title">Beginner-friendly</div>
+									<div class="badge-sub">No technical background required</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<aside class="hero-card" aria-label="Next session">
+						<div class="hero-card-inner">
+							<div class="hero-card-top">
+								<p class="hero-card-kicker">Next meetup</p>
+								<p class="hero-card-title">Get an invite to the next session</p>
+								<p class="hero-card-sub">
+									We’re keeping it small and cosy — capped at 15 people so everyone gets help.
+								</p>
+							</div>
+
+							<ul class="facts" aria-label="Meeting facts">
+								<li>
+									<span class="fact-key">Frequency</span>
+									<span class="fact-val">Fortnightly / every two weeks</span>
+								</li>
+								<li>
+									<span class="fact-key">Location</span>
+									<span class="fact-val"
+										>Community spaces across London (exploring free venues via libraries & council
+										halls)</span
+									>
+								</li>
+								<li>
+									<span class="fact-key">Cost</span>
+									<span class="fact-val">Free</span>
+								</li>
+							</ul>
+
+							<a class="btn btn-primary btn-wide" href="#signup">Join Our Next Session</a>
+							<p class="fine">
+								Bring your laptop. We’ll supply the prompts, gentle guidance, and a friendly vibe.
+							</p>
+						</div>
+					</aside>
+				</div>
+			</section>
+
+			<section id="what" class="section">
+				<div class="section-head">
+					<h2 class="h2">What we do</h2>
+					<p class="sub">
+						A practical meetup for learning by doing — you’ll leave with ideas you can use the same
+						day.
+					</p>
+				</div>
+
+				<div class="cards">
+					<article class="card">
+						<div class="card-ico" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M4 7.5C4 6.12 5.12 5 6.5 5H17.5C18.88 5 20 6.12 20 7.5V16.5C20 17.88 18.88 19 17.5 19H6.5C5.12 19 4 17.88 4 16.5V7.5Z"
+									stroke="currentColor"
+									stroke-width="2"
+								/>
+								<path
+									d="M8 9H16"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+								<path
+									d="M8 13H13"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+							</svg>
+						</div>
+						<h3 class="h3">Hands-on workshops</h3>
+						<p>
+							Practice tools like ChatGPT, Claude, Midjourney, and others — with real prompts, real
+							results, and time to try your own ideas.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card-ico" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M12 3L20 8V16L12 21L4 16V8L12 3Z"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linejoin="round"
+								/>
+								<path
+									d="M12 7V17"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+								<path
+									d="M7.5 10.2L12 12.8L16.5 10.2"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</div>
+						<h3 class="h3">Group challenges</h3>
+						<p>
+							Tiny collaborative projects that make it fun: shared briefs, prompt battles, rapid
+							prototyping, and “show & tell” moments.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card-ico" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M7 10.5C7 8.01 9.01 6 11.5 6H15C17.21 6 19 7.79 19 10V10"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+								<path
+									d="M17 13.5C17 15.99 14.99 18 12.5 18H9C6.79 18 5 16.21 5 14V14"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+								<path
+									d="M9 12H15"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+								/>
+							</svg>
+						</div>
+						<h3 class="h3">Sharing prompts & workflows</h3>
+						<p>
+							Bring what you’ve discovered: your best prompts, shortcuts, and “aha” moments — so the
+							group gets better, faster.
+						</p>
+					</article>
+
+					<article class="card">
+						<div class="card-ico" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21Z"
+									stroke="currentColor"
+									stroke-width="2"
+								/>
+								<path
+									d="M12 8V12L15 14"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</div>
+						<h3 class="h3">Beginner-friendly pace</h3>
+						<p>
+							No jargon, no judgement. If you’re curious, you’re ready. We’ll pair up, troubleshoot,
+							and keep things easy to follow.
+						</p>
+					</article>
+				</div>
+			</section>
+
+			<section id="who" class="section section-split">
+				<div class="section-head">
+					<h2 class="h2">Who it’s for</h2>
+					<p class="sub">
+						Curious professionals, freelancers, creatives, and anyone who wants to get better at using
+						AI in their work or life. No technical background required.
+					</p>
+				</div>
+
+				<div class="split">
+					<div class="panel">
+						<h3 class="h3">You’ll fit right in if you want to…</h3>
+						<ul class="list">
+							<li>turn “AI curiosity” into consistent practice</li>
+							<li>learn what tools are good for (and what they’re not)</li>
+							<li>build a small library of prompts and workflows you can reuse</li>
+							<li>meet kind people who like learning together</li>
+						</ul>
+					</div>
+
+					<div class="panel panel-accent" aria-label="Examples">
+						<h3 class="h3">People we love having</h3>
+						<div class="chips" role="list">
+							<span class="chip" role="listitem">Marketers & comms</span>
+							<span class="chip" role="listitem">Designers & creatives</span>
+							<span class="chip" role="listitem">Founders & operators</span>
+							<span class="chip" role="listitem">Students & career switchers</span>
+							<span class="chip" role="listitem">Writers & researchers</span>
+							<span class="chip" role="listitem">Anyone feeling “new to this”</span>
+						</div>
+						<p class="fine">
+							We keep the group small so you can ask questions, get unstuck, and leave with momentum.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section id="how" class="section">
+				<div class="section-head">
+					<h2 class="h2">How it works</h2>
+					<p class="sub">A simple routine that makes learning feel easy (and social).</p>
+				</div>
+
+				<ol class="steps">
+					<li class="step">
+						<span class="step-num" aria-hidden="true">1</span>
+						<div class="step-body">
+							<h3 class="h3">Sign up for a session</h3>
+							<p>Leave your email and we’ll send the next date + location once confirmed.</p>
+						</div>
+					</li>
+					<li class="step">
+						<span class="step-num" aria-hidden="true">2</span>
+						<div class="step-body">
+							<h3 class="h3">Show up with your laptop</h3>
+							<p>We’ll work through exercises together — pair up if you like, go solo if you prefer.</p>
+						</div>
+					</li>
+					<li class="step">
+						<span class="step-num" aria-hidden="true">3</span>
+						<div class="step-body">
+							<h3 class="h3">Learn, experiment, and connect</h3>
+							<p>Try new tools, swap tips, and leave with a few wins you can repeat at home.</p>
+						</div>
+					</li>
+				</ol>
+			</section>
+
+			<section id="details" class="section">
+				<div class="section-head">
+					<h2 class="h2">Meeting details</h2>
+					<p class="sub">We’re keeping it simple while we grow.</p>
+				</div>
+
+				<div class="details">
+					<div class="details-card">
+						<dl class="dl">
+							<div class="dl-row">
+								<dt>Location</dt>
+								<dd>
+									Various community spaces across London (currently exploring free venues via local
+									libraries and council halls)
+								</dd>
+							</div>
+							<div class="dl-row">
+								<dt>Frequency</dt>
+								<dd>Fortnightly / every two weeks</dd>
+							</div>
+							<div class="dl-row">
+								<dt>Group size</dt>
+								<dd>Small and intimate, capped at 15 people</dd>
+							</div>
+							<div class="dl-row">
+								<dt>Cost</dt>
+								<dd>Free</dd>
+							</div>
+						</dl>
+					</div>
+
+					<div class="details-note">
+						<h3 class="h3">A note on vibe</h3>
+						<p>
+							This isn’t a lecture. It’s more like a friendly working session: bring a goal, try a few
+							things, ask for help, and share what worked.
+						</p>
+						<p class="fine">
+							We’re actively looking for accessible, free spaces — if you know a good community venue,
+							tell us in the signup form.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="section proof">
+				<div class="section-head">
+					<h2 class="h2">Member stories</h2>
+					<p class="sub">Social proof space — coming soon as we collect quotes.</p>
+				</div>
+
+				<div class="quotes" aria-label="Testimonials placeholder">
+					<figure class="quote quote-placeholder">
+						<blockquote>
+							<span class="quote-dots" aria-hidden="true"></span>
+							<p>“Coming soon — a real quote from a future member.”</p>
+						</blockquote>
+						<figcaption>— Name, role</figcaption>
+					</figure>
+					<figure class="quote quote-placeholder">
+						<blockquote>
+							<span class="quote-dots" aria-hidden="true"></span>
+							<p>“Coming soon — what someone will say after their first session.”</p>
+						</blockquote>
+						<figcaption>— Name, London</figcaption>
+					</figure>
+					<figure class="quote quote-placeholder">
+						<blockquote>
+							<span class="quote-dots" aria-hidden="true"></span>
+							<p>“Coming soon — a short note about confidence + practical wins.”</p>
+						</blockquote>
+						<figcaption>— Name, creative / professional</figcaption>
+					</figure>
+				</div>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<div class="footer-inner">
+				<div class="footer-card" id="signup">
+					<div class="footer-copy">
+						<h2 class="h2">Join us</h2>
+						<p class="sub">
+							Get notified about the next meetup. We’ll email the date + location once it’s confirmed.
+						</p>
+						<p class="fine">No spam. If it’s not your thing, one click to unsubscribe.</p>
+					</div>
+
+					<form class="form" id="signupForm">
+						<label class="field">
+							<span class="label">Name</span>
+							<input name="name" autocomplete="name" required placeholder="Your name" />
+						</label>
+
+						<label class="field">
+							<span class="label">Email</span>
+							<input
+								name="email"
+								type="email"
+								autocomplete="email"
+								required
+								placeholder="you@example.com"
+							/>
+						</label>
+
+						<label class="field field-wide">
+							<span class="label">What interests you most about AI? <span class="optional">(optional)</span></span>
+							<textarea
+								name="interest"
+								rows="3"
+								placeholder="e.g. productivity workflows, creative tools, prompts for writing, AI for research…"
+							></textarea>
+						</label>
+
+						<div class="form-actions">
+							<button class="btn btn-primary" type="submit">Notify me</button>
+							<p class="fine" id="formStatus" role="status" aria-live="polite"></p>
+						</div>
+					</form>
+				</div>
+
+				<div class="footer-bottom">
+					<p class="fine">
+						© {new Date().getFullYear()} {clubName}. Made for a small London community.
+					</p>
+					<a class="fine link" href="#top">Back to top</a>
+				</div>
+			</div>
+		</footer>
+	</div>
+
+	<script is:inline>
+		const form = document.getElementById('signupForm');
+		const status = document.getElementById('formStatus');
+
+		form?.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const data = new FormData(form);
+			const entry = {
+				name: (data.get('name') || '').toString(),
+				email: (data.get('email') || '').toString(),
+				interest: (data.get('interest') || '').toString(),
+				createdAt: new Date().toISOString(),
+			};
+
+			try {
+				const key = 'ai-together-signups';
+				const existing = JSON.parse(localStorage.getItem(key) || '[]');
+				existing.unshift(entry);
+				localStorage.setItem(key, JSON.stringify(existing.slice(0, 25)));
+				status.textContent = "You're on the list — we’ll email you the next session details.";
+				form.reset();
+			} catch {
+				status.textContent = "Thanks — you're in! (If this message repeats, refresh and try again.)";
+			}
+		});
+	</script>
+
+	<style>
+		.page {
+			position: relative;
+		}
+
+		.top {
+			position: sticky;
+			top: 0;
+			z-index: 50;
+			backdrop-filter: blur(14px);
+			background: linear-gradient(180deg, rgba(251, 250, 246, 0.82), rgba(251, 250, 246, 0.62));
+			border-bottom: 1px solid var(--stroke-2);
+		}
+
+		.top-inner {
+			max-width: var(--max);
+			margin: 0 auto;
+			padding: 14px var(--pad);
+			display: grid;
+			grid-template-columns: 1fr auto auto;
+			align-items: center;
+			gap: 14px;
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			text-decoration: none;
+			color: inherit;
+			min-width: 240px;
+		}
+
+		.brand-mark {
+			position: relative;
+			width: 42px;
+			height: 42px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, 0.72);
+			border: 1px solid var(--stroke-2);
+			box-shadow: 0 16px 40px rgba(13, 18, 24, 0.08);
+			overflow: hidden;
+		}
+
+		.dot {
+			position: absolute;
+			border-radius: 999px;
+			filter: blur(0.2px);
+		}
+
+		.dot-a {
+			width: 22px;
+			height: 22px;
+			left: 8px;
+			top: 10px;
+			background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(60, 137, 182, 0.88));
+		}
+
+		.dot-b {
+			width: 18px;
+			height: 18px;
+			right: 6px;
+			top: 7px;
+			background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.86), rgba(255, 191, 102, 0.95));
+			mix-blend-mode: multiply;
+		}
+
+		.dot-c {
+			width: 20px;
+			height: 20px;
+			right: 10px;
+			bottom: 8px;
+			background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.86), rgba(255, 107, 91, 0.9));
+			mix-blend-mode: multiply;
+		}
+
+		.brand-text {
+			display: grid;
+			gap: 2px;
+			line-height: 1.1;
+		}
+
+		.brand-name {
+			font-family: var(--font-display);
+			letter-spacing: -0.02em;
+			font-weight: 700;
+			font-size: 18px;
+		}
+
+		.brand-tag {
+			font-size: 12px;
+			color: var(--muted-2);
+		}
+
+		.nav {
+			display: flex;
+			gap: 14px;
+			align-items: center;
+			padding: 10px 12px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.52);
+			border: 1px solid var(--stroke-2);
+		}
+
+		.nav a {
+			font-size: 13px;
+			text-decoration: none;
+			color: var(--muted);
+			padding: 8px 10px;
+			border-radius: 999px;
+			transition:
+				background 0.15s ease,
+				color 0.15s ease,
+				transform 0.15s ease;
+			white-space: nowrap;
+		}
+
+		.nav a:hover {
+			background: rgba(60, 137, 182, 0.12);
+			color: var(--ink);
+			transform: translateY(-1px);
+		}
+
+		.main {
+			max-width: var(--max);
+			margin: 0 auto;
+			padding: 0 var(--pad);
+		}
+
+		.hero {
+			padding: clamp(26px, 6vw, 56px) 0 clamp(22px, 4vw, 34px);
+		}
+
+		.hero-grid {
+			display: grid;
+			grid-template-columns: 1.15fr 0.85fr;
+			gap: clamp(18px, 3.6vw, 28px);
+			align-items: start;
+		}
+
+		.hero-copy {
+			padding: 10px 0;
+			animation: rise 0.7s ease both;
+		}
+
+		.eyebrow {
+			display: inline-flex;
+			gap: 10px;
+			align-items: center;
+			padding: 10px 12px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.62);
+			border: 1px solid var(--stroke-2);
+			color: var(--muted);
+			font-size: 13px;
+		}
+
+		.h1 {
+			margin: 18px 0 10px;
+			font-family: var(--font-display);
+			font-size: clamp(34px, 4.6vw, 54px);
+			line-height: 1.04;
+			letter-spacing: -0.03em;
+		}
+
+		.h1-soft {
+			display: inline;
+			color: rgba(23, 32, 42, 0.76);
+		}
+
+		.lead {
+			margin: 0;
+			max-width: 60ch;
+			color: var(--muted);
+			font-size: clamp(16px, 1.6vw, 18px);
+			line-height: 1.6;
+		}
+
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-top: 18px;
+		}
+
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 12px 16px;
+			border-radius: 999px;
+			border: 1px solid transparent;
+			text-decoration: none;
+			font-weight: 650;
+			letter-spacing: -0.01em;
+			cursor: pointer;
+			transition:
+				transform 0.14s ease,
+				box-shadow 0.14s ease,
+				background 0.14s ease,
+				border-color 0.14s ease,
+				color 0.14s ease;
+			user-select: none;
+		}
+
+		.btn:focus-visible {
+			outline: 3px solid rgba(60, 137, 182, 0.3);
+			outline-offset: 3px;
+		}
+
+		.btn-primary {
+			color: #10212b;
+			background:
+				linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72)) padding-box,
+				linear-gradient(135deg, rgba(60, 137, 182, 0.62), rgba(255, 107, 91, 0.55), rgba(255, 191, 102, 0.6))
+					border-box;
+			border: 1px solid transparent;
+			box-shadow:
+				0 18px 44px rgba(13, 18, 24, 0.12),
+				inset 0 1px 0 rgba(255, 255, 255, 0.7);
+		}
+
+		.btn-primary:hover {
+			transform: translateY(-1px);
+			box-shadow:
+				0 22px 54px rgba(13, 18, 24, 0.14),
+				inset 0 1px 0 rgba(255, 255, 255, 0.72);
+		}
+
+		.btn-ghost {
+			background: rgba(255, 255, 255, 0.5);
+			border-color: var(--stroke-2);
+			color: var(--muted);
+		}
+
+		.btn-ghost:hover {
+			background: rgba(255, 255, 255, 0.75);
+			color: var(--ink);
+			transform: translateY(-1px);
+		}
+
+		.btn-icon {
+			width: 18px;
+			height: 18px;
+			display: inline-flex;
+		}
+
+		.btn-small {
+			padding: 10px 14px;
+			font-size: 13px;
+		}
+
+		.btn-wide {
+			width: 100%;
+		}
+
+		.hero-badges {
+			margin-top: 18px;
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 12px;
+		}
+
+		.badge {
+			display: grid;
+			grid-template-columns: 26px 1fr;
+			gap: 10px;
+			padding: 14px 14px;
+			border-radius: var(--radius-md);
+			background: rgba(255, 255, 255, 0.58);
+			border: 1px solid var(--stroke-2);
+		}
+
+		.badge-ico {
+			width: 26px;
+			height: 26px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			color: rgba(43, 106, 146, 0.95);
+		}
+
+		.badge-title {
+			font-weight: 650;
+			letter-spacing: -0.01em;
+			margin-bottom: 2px;
+		}
+
+		.badge-sub {
+			color: var(--muted-2);
+			font-size: 13px;
+			line-height: 1.35;
+		}
+
+		.hero-card {
+			position: relative;
+			border-radius: var(--radius-lg);
+			background: rgba(255, 255, 255, 0.62);
+			border: 1px solid var(--stroke);
+			box-shadow: var(--shadow);
+			overflow: hidden;
+			animation: rise 0.7s ease both;
+			animation-delay: 0.08s;
+		}
+
+		.hero-card::before {
+			content: '';
+			position: absolute;
+			inset: -40% -20% auto -40%;
+			height: 240px;
+			background:
+				radial-gradient(closest-side, rgba(60, 137, 182, 0.24), transparent 70%),
+				radial-gradient(closest-side, rgba(255, 191, 102, 0.22), transparent 70%),
+				radial-gradient(closest-side, rgba(255, 107, 91, 0.2), transparent 70%);
+			transform: rotate(-8deg);
+			filter: blur(8px);
+			opacity: 0.9;
+		}
+
+		.hero-card-inner {
+			position: relative;
+			padding: 20px;
+		}
+
+		.hero-card-kicker {
+			margin: 0;
+			font-weight: 650;
+			font-size: 12px;
+			color: rgba(43, 106, 146, 0.92);
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+
+		.hero-card-title {
+			margin: 10px 0 8px;
+			font-family: var(--font-display);
+			font-size: 24px;
+			letter-spacing: -0.02em;
+		}
+
+		.hero-card-sub {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.facts {
+			list-style: none;
+			padding: 0;
+			margin: 16px 0 14px;
+			display: grid;
+			gap: 10px;
+		}
+
+		.facts li {
+			display: grid;
+			gap: 4px;
+			padding: 12px 12px;
+			border-radius: var(--radius-md);
+			background: rgba(255, 255, 255, 0.62);
+			border: 1px solid var(--stroke-2);
+		}
+
+		.fact-key {
+			font-size: 12px;
+			color: var(--muted-2);
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+		}
+
+		.fact-val {
+			color: var(--ink);
+			line-height: 1.35;
+			font-size: 14px;
+		}
+
+		.fine {
+			margin: 10px 0 0;
+			color: var(--muted-2);
+			font-size: 13px;
+			line-height: 1.5;
+		}
+
+		.section {
+			padding: clamp(22px, 5vw, 54px) 0;
+		}
+
+		.section-head {
+			display: grid;
+			gap: 8px;
+			margin-bottom: 16px;
+		}
+
+		.h2 {
+			margin: 0;
+			font-family: var(--font-display);
+			font-size: clamp(24px, 3vw, 34px);
+			letter-spacing: -0.02em;
+		}
+
+		.sub {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.6;
+			max-width: 72ch;
+		}
+
+		.cards {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 14px;
+		}
+
+		.card {
+			border-radius: var(--radius-lg);
+			background: var(--card);
+			border: 1px solid var(--stroke-2);
+			box-shadow: 0 18px 48px rgba(13, 18, 24, 0.06);
+			padding: 18px 16px;
+			transition:
+				transform 0.16s ease,
+				box-shadow 0.16s ease,
+				background 0.16s ease;
+		}
+
+		.card:hover {
+			transform: translateY(-2px);
+			background: rgba(255, 255, 255, 0.82);
+			box-shadow: 0 26px 72px rgba(13, 18, 24, 0.1);
+		}
+
+		.card-ico {
+			width: 42px;
+			height: 42px;
+			border-radius: 14px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			color: rgba(43, 106, 146, 0.95);
+			background:
+				linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62)) padding-box,
+				linear-gradient(135deg, rgba(60, 137, 182, 0.55), rgba(255, 107, 91, 0.38), rgba(255, 191, 102, 0.45))
+					border-box;
+			border: 1px solid transparent;
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+			margin-bottom: 10px;
+		}
+
+		.h3 {
+			margin: 0 0 6px;
+			font-size: 16px;
+			letter-spacing: -0.01em;
+		}
+
+		.card p {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.6;
+			font-size: 14px;
+		}
+
+		.section-split .split {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 14px;
+			margin-top: 14px;
+		}
+
+		.panel {
+			border-radius: var(--radius-lg);
+			background: var(--card);
+			border: 1px solid var(--stroke-2);
+			padding: 18px 16px;
+		}
+
+		.panel-accent {
+			background:
+				radial-gradient(800px 300px at 10% 0%, rgba(60, 137, 182, 0.16), transparent 60%),
+				radial-gradient(800px 320px at 90% 0%, rgba(255, 107, 91, 0.14), transparent 58%),
+				radial-gradient(900px 360px at 50% 110%, rgba(255, 191, 102, 0.14), transparent 58%),
+				var(--card-strong);
+			box-shadow: 0 18px 62px rgba(13, 18, 24, 0.08);
+		}
+
+		.list {
+			margin: 10px 0 0;
+			padding-left: 18px;
+			color: var(--muted);
+			line-height: 1.7;
+		}
+
+		.chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-top: 12px;
+		}
+
+		.chip {
+			font-size: 13px;
+			padding: 10px 12px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.62);
+			border: 1px solid var(--stroke-2);
+			color: var(--muted);
+		}
+
+		.steps {
+			list-style: none;
+			padding: 0;
+			margin: 12px 0 0;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 14px;
+		}
+
+		.step {
+			border-radius: var(--radius-lg);
+			background: var(--card);
+			border: 1px solid var(--stroke-2);
+			padding: 16px;
+			display: grid;
+			grid-template-columns: 38px 1fr;
+			gap: 12px;
+		}
+
+		.step-num {
+			width: 38px;
+			height: 38px;
+			border-radius: 14px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			font-weight: 700;
+			color: rgba(23, 32, 42, 0.92);
+			background:
+				linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.62)) padding-box,
+				linear-gradient(135deg, rgba(60, 137, 182, 0.45), rgba(255, 107, 91, 0.35), rgba(255, 191, 102, 0.42))
+					border-box;
+			border: 1px solid transparent;
+		}
+
+		.step-body p {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.6;
+			font-size: 14px;
+		}
+
+		.details {
+			display: grid;
+			grid-template-columns: 1.25fr 0.75fr;
+			gap: 14px;
+			margin-top: 14px;
+		}
+
+		.details-card,
+		.details-note {
+			border-radius: var(--radius-lg);
+			background: var(--card);
+			border: 1px solid var(--stroke-2);
+			padding: 18px 16px;
+		}
+
+		.dl {
+			margin: 0;
+			display: grid;
+			gap: 12px;
+		}
+
+		.dl-row {
+			display: grid;
+			grid-template-columns: 160px 1fr;
+			gap: 12px;
+			padding: 12px;
+			border-radius: var(--radius-md);
+			background: rgba(255, 255, 255, 0.56);
+			border: 1px solid var(--stroke-2);
+		}
+
+		dt {
+			font-weight: 650;
+			letter-spacing: -0.01em;
+		}
+
+		dd {
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.5;
+		}
+
+		.proof .quotes {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 14px;
+			margin-top: 14px;
+		}
+
+		.quote {
+			border-radius: var(--radius-lg);
+			background: rgba(255, 255, 255, 0.58);
+			border: 1px dashed rgba(23, 32, 42, 0.22);
+			padding: 16px;
+		}
+
+		blockquote {
+			margin: 0;
+		}
+
+		.quote p {
+			margin: 10px 0 0;
+			color: var(--muted);
+			line-height: 1.65;
+		}
+
+		.quote-dots {
+			display: block;
+			width: 64px;
+			height: 10px;
+			border-radius: 999px;
+			background:
+				radial-gradient(circle at 14% 50%, rgba(60, 137, 182, 0.7) 0 4px, transparent 5px),
+				radial-gradient(circle at 50% 50%, rgba(255, 107, 91, 0.7) 0 4px, transparent 5px),
+				radial-gradient(circle at 86% 50%, rgba(255, 191, 102, 0.74) 0 4px, transparent 5px);
+			opacity: 0.9;
+		}
+
+		figcaption {
+			margin-top: 10px;
+			color: var(--muted-2);
+			font-size: 13px;
+		}
+
+		.footer {
+			padding: 0 0 46px;
+		}
+
+		.footer-inner {
+			max-width: var(--max);
+			margin: 0 auto;
+			padding: 0 var(--pad);
+		}
+
+		.footer-card {
+			border-radius: calc(var(--radius-lg) + 6px);
+			background:
+				radial-gradient(1100px 420px at 20% 0%, rgba(60, 137, 182, 0.16), transparent 60%),
+				radial-gradient(900px 380px at 90% 0%, rgba(255, 107, 91, 0.14), transparent 60%),
+				radial-gradient(900px 420px at 52% 120%, rgba(255, 191, 102, 0.16), transparent 62%),
+				rgba(255, 255, 255, 0.74);
+			border: 1px solid var(--stroke);
+			box-shadow: var(--shadow);
+			padding: clamp(18px, 3vw, 22px);
+			display: grid;
+			grid-template-columns: 1fr 1.05fr;
+			gap: 16px;
+			overflow: hidden;
+		}
+
+		.form {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+			align-content: start;
+		}
+
+		.field {
+			display: grid;
+			gap: 8px;
+		}
+
+		.field-wide {
+			grid-column: 1 / -1;
+		}
+
+		.label {
+			font-size: 13px;
+			color: var(--muted);
+			font-weight: 550;
+		}
+
+		.optional {
+			font-weight: 450;
+			color: var(--muted-2);
+		}
+
+		input,
+		textarea {
+			font: inherit;
+			color: var(--ink);
+			padding: 12px 12px;
+			border-radius: 14px;
+			border: 1px solid rgba(23, 32, 42, 0.14);
+			background: rgba(255, 255, 255, 0.7);
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+			transition:
+				border-color 0.14s ease,
+				background 0.14s ease,
+				box-shadow 0.14s ease;
+		}
+
+		textarea {
+			resize: vertical;
+			min-height: 92px;
+		}
+
+		input:focus,
+		textarea:focus {
+			outline: none;
+			border-color: rgba(60, 137, 182, 0.5);
+			background: rgba(255, 255, 255, 0.9);
+			box-shadow:
+				0 0 0 4px rgba(60, 137, 182, 0.14),
+				inset 0 1px 0 rgba(255, 255, 255, 0.7);
+		}
+
+		.form-actions {
+			grid-column: 1 / -1;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			margin-top: 2px;
+		}
+
+		.footer-bottom {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 14px;
+			margin-top: 14px;
+			padding: 0 2px;
+		}
+
+		.link {
+			text-decoration: none;
+			color: var(--muted);
+			border-bottom: 1px solid rgba(23, 32, 42, 0.18);
+			padding-bottom: 1px;
+		}
+
+		.link:hover {
+			color: var(--ink);
+			border-bottom-color: rgba(23, 32, 42, 0.32);
+		}
+
+		@keyframes rise {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 980px) {
+			.top-inner {
+				grid-template-columns: 1fr auto;
+			}
+
+			.nav {
+				display: none;
+			}
+
+			.hero-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.hero-badges {
+				grid-template-columns: 1fr;
+			}
+
+			.cards {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.section-split .split {
+				grid-template-columns: 1fr;
+			}
+
+			.steps {
+				grid-template-columns: 1fr;
+			}
+
+			.details {
+				grid-template-columns: 1fr;
+			}
+
+			.proof .quotes {
+				grid-template-columns: 1fr;
+			}
+
+			.footer-card {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@media (max-width: 520px) {
+			.cards {
+				grid-template-columns: 1fr;
+			}
+
+			.form {
+				grid-template-columns: 1fr;
+			}
+
+			.dl-row {
+				grid-template-columns: 1fr;
+			}
+
+			.footer-bottom {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.hero-copy,
+			.hero-card {
+				animation: none;
+			}
+
+			.card,
+			.btn,
+			.nav a {
+				transition: none;
+			}
+		}
+	</style>
+</Layout>
