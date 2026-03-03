@@ -13,5 +13,12 @@
   "observability": {
     "enabled": true
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai_together_signups",
+      "database_id": "73288acb-505a-458c-a7bc-3b0842960af9"
+    }
+  ],
   "$schema": "node_modules/wrangler/config-schema.json"
 }
