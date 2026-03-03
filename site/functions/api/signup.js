@@ -1,17 +1,4 @@
-export interface Env {
-	DB: D1Database;
-}
-
-type SignupPayload = {
-	name: string;
-	email: string;
-	interest?: string;
-	createdAt: string;
-	sourceIp?: string | null;
-	userAgent?: string | null;
-};
-
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context) => {
 	try {
 		const formData = await context.request.formData();
 
@@ -25,10 +12,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
 		const createdAt = new Date().toISOString();
 
-		const payload: SignupPayload = {
+		const payload = {
 			name,
 			email,
-			interest: interest || undefined,
+			interest: interest || null,
 			createdAt,
 			sourceIp: context.request.headers.get('CF-Connecting-IP'),
 			userAgent: context.request.headers.get('User-Agent'),
@@ -55,34 +42,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 			.bind(
 				payload.name || null,
 				payload.email,
-				payload.interest || null,
+				payload.interest,
 				payload.createdAt,
 				payload.sourceIp || null,
 				payload.userAgent || null
 			)
 			.run();
 
-		return json(
-			{
-				ok: true,
-				message: "You're on the list — we’ll email you the next session details.",
-			},
-			200
-		);
+		return json({
+			ok: true,
+			message: "You're on the list — we’ll email you the next session details.",
+		});
 	} catch (error) {
 		console.error('Signup error', error);
-		return json(
-			{
-				ok: false,
-				error:
-					"Something went wrong saving your signup. Please try again in a moment, or email us directly.",
-			},
-			500
-		);
+		return json({
+			ok: false,
+			error:
+				"Something went wrong saving your signup. Please try again in a moment, or email us directly.",
+		}, 500);
 	}
 };
 
-function json(body: unknown, status = 200): Response {
+function json(body, status = 200) {
 	return new Response(JSON.stringify(body), {
 		status,
 		headers: {

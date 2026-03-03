@@ -493,7 +493,7 @@ const clubTag = 'London community club';
 	</div>
 
 	<script is:inline>
-		const form = document.getElementById('signupForm') as HTMLFormElement | null;
+		const form = document.getElementById('signupForm');
 		const status = document.getElementById('formStatus');
 
 		form?.addEventListener('submit', async (e) => {
@@ -514,13 +514,13 @@ const clubTag = 'London community club';
 				});
 
 				const contentType = res.headers.get('Content-Type') || '';
-				let payload: any = null;
+				let payload = null;
 
 				if (contentType.includes('application/json')) {
 					payload = await res.json();
 				}
 
-				if (!res.ok || !payload?.ok) {
+				if (!res.ok || !(payload && payload.ok)) {
 					const errorMessage =
 						(payload && (payload.error || payload.message)) ||
 						'Something went wrong. Please try again.';
@@ -529,7 +529,7 @@ const clubTag = 'London community club';
 				}
 
 				status.textContent =
-					payload.message ||
+					(payload && payload.message) ||
 					"You're on the list — we’ll email you the next session details.";
 				form.reset();
 			} catch (error) {
