@@ -449,7 +449,7 @@ const clubTag = 'London community club';
 						<p class="fine">No spam. If it’s not your thing, one click to unsubscribe.</p>
 					</div>
 
-					<form class="form" id="signupForm">
+					<form class="form" id="signupForm" method="post" action="/api/signup">
 						<label class="field">
 							<span class="label">Name</span>
 							<input name="name" autocomplete="name" required placeholder="Your name" />
@@ -493,29 +493,49 @@ const clubTag = 'London community club';
 	</div>
 
 	<script is:inline>
-		const form = document.getElementById('signupForm');
+		const form = document.getElementById('signupForm') as HTMLFormElement | null;
 		const status = document.getElementById('formStatus');
 
-		form?.addEventListener('submit', (e) => {
+		form?.addEventListener('submit', async (e) => {
 			e.preventDefault();
+			if (!form || !status) return;
+
+			status.textContent = 'Submitting...';
 
 			const data = new FormData(form);
-			const entry = {
-				name: (data.get('name') || '').toString(),
-				email: (data.get('email') || '').toString(),
-				interest: (data.get('interest') || '').toString(),
-				createdAt: new Date().toISOString(),
-			};
 
 			try {
-				const key = 'ai-together-signups';
-				const existing = JSON.parse(localStorage.getItem(key) || '[]');
-				existing.unshift(entry);
-				localStorage.setItem(key, JSON.stringify(existing.slice(0, 25)));
-				status.textContent = "You're on the list — we’ll email you the next session details.";
+				const res = await fetch(form.action || '/api/signup', {
+					method: 'POST',
+					body: data,
+					headers: {
+						Accept: 'application/json',
+					},
+				});
+
+				const contentType = res.headers.get('Content-Type') || '';
+				let payload: any = null;
+
+				if (contentType.includes('application/json')) {
+					payload = await res.json();
+				}
+
+				if (!res.ok || !payload?.ok) {
+					const errorMessage =
+						(payload && (payload.error || payload.message)) ||
+						'Something went wrong. Please try again.';
+					status.textContent = errorMessage;
+					return;
+				}
+
+				status.textContent =
+					payload.message ||
+					"You're on the list — we’ll email you the next session details.";
 				form.reset();
-			} catch {
-				status.textContent = "Thanks — you're in! (If this message repeats, refresh and try again.)";
+			} catch (error) {
+				console.error(error);
+				status.textContent =
+					"Thanks — you're in! If this message repeats, refresh and try again, or email us directly.";
 			}
 		});
 	</script>
