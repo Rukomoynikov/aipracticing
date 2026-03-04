@@ -8,6 +8,11 @@ declare namespace Cloudflare {
 	interface Env {
 		DB: D1Database;
 		ASSETS: Fetcher;
+		AWS_REGION: string;
+		SES_FROM_EMAIL: string;
+		APP_URL: string;
+		AWS_ACCESS_KEY_ID: string;
+		AWS_SECRET_ACCESS_KEY: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

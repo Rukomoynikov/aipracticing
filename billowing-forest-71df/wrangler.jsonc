@@ -23,7 +23,12 @@
 			"database_name": "ai-together-signups",
 			"database_id": "ce5b960e-bf9d-4e19-b483-6f42147472d3"
 		}
-	]
+	],
+	"vars": {
+		"AWS_REGION": "eu-central-1",
+		"SES_FROM_EMAIL": "hello@aitogether.community",
+		"APP_URL": "https://billowing-forest-71df.workers.dev"
+	}
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
