@@ -43,9 +43,13 @@ const formScript = `
         return;
       }
 
-      status.textContent =
-        (payload && payload.message) ||
-        "You're on the list — we'll email you the next session details.";
+      var copy = document.getElementById('signupCopy');
+      if (copy) copy.style.display = 'none';
+      form.style.display = 'none';
+      var card = document.getElementById('signup');
+      if (card) card.style.display = 'flex';
+      var success = document.getElementById('signupSuccess');
+      if (success) success.classList.add('visible');
       form.reset();
     } catch (err) {
       console.error(err);

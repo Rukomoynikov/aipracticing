@@ -4,7 +4,7 @@ const Footer: FC = () => (
   <footer className="footer">
     <div className="footer-inner">
       <div className="footer-card" id="signup">
-        <div className="footer-copy">
+        <div className="footer-copy" id="signupCopy">
           <h2 className="h2">Join us</h2>
           <p className="sub">
             Get notified about the next meetup. We'll email the date + location once it's confirmed.
@@ -45,6 +45,12 @@ const Footer: FC = () => (
             <p className="fine" id="formStatus" role="status" aria-live="polite"></p>
           </div>
         </form>
+
+        <div className="signup-success" id="signupSuccess" aria-live="polite">
+          <div className="signup-success-icon">✓</div>
+          <h2 className="h2">You're on the list</h2>
+          <p className="sub">We'll email you the date and location once the next session is confirmed.</p>
+        </div>
       </div>
 
       <div className="footer-bottom">
