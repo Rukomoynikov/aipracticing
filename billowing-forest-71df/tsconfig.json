@@ -8,10 +8,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM"
     ],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
+    "jsxImportSource": "react",
     "types": [
         "./worker-configuration.d.ts",
         "node"
