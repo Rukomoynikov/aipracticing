@@ -27,7 +27,7 @@
 	"vars": {
 		"AWS_REGION": "eu-central-1",
 		"SES_FROM_EMAIL": "noreply@aitogether.club",
-		"APP_URL": "https://billowing-forest-71df.workers.dev"
+		"APP_URL": "https://aitogether.club"
 	}
 	/**
 	 * Smart Placement
