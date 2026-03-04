@@ -78,6 +78,18 @@ const App: FC = () => (
         rel="stylesheet"
       />
       <link rel="stylesheet" href="/styles.css" />
+      {/* Open Graph */}
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://aitogether.club" />
+      <meta property="og:title" content="AI Together — London AI practice club" />
+      <meta property="og:description" content="A small, friendly London community (10–15 people) meeting fortnightly to practice AI tools together. Beginner-friendly, free, and hands-on." />
+      <meta property="og:image" content="https://aitogether.club/og-image.png" />
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content="https://aitogether.club" />
+      <meta name="twitter:title" content="AI Together — London AI practice club" />
+      <meta name="twitter:description" content="A small, friendly London community (10–15 people) meeting fortnightly to practice AI tools together. Beginner-friendly, free, and hands-on." />
+      <meta name="twitter:image" content="https://aitogether.club/og-image.png" />
     </head>
     <body>
       <div className="page">
