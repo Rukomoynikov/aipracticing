@@ -9,10 +9,16 @@
 		<h1 id="heading"></h1>
 		<script>
 			fetch('/message')
-				.then((resp) => resp.text())
+				.then((resp) => {
+					if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+					return resp.text();
+				})
 				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
+					document.getElementById('heading').textContent = text;
+				})
+				.catch((err) => {
+					document.getElementById('heading').textContent = 'Failed to load message.';
+					console.error(err);
 				});
 		</script>
 	</body>
