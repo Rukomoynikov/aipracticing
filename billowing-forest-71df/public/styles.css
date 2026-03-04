@@ -2,6 +2,10 @@
    Global CSS — from Layout.astro
    ============================================================ */
 
+*, *::before, *::after {
+	box-sizing: border-box;
+}
+
 :root {
 	--bg: #fbfaf6;
 	--bg-2: #f4f0e9;
@@ -316,13 +320,20 @@ body::before {
 }
 
 .hero-card .btn-primary.btn-wide {
-	background:
-		linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9)) padding-box,
-		linear-gradient(135deg, rgba(60, 137, 182, 0.4), rgba(255, 191, 102, 0.4)) border-box;
+	background: linear-gradient(135deg, #3c89b6, #2a6f96);
+	color: #fff;
+	border-color: transparent;
 	box-shadow:
-		0 10px 26px rgba(13, 18, 24, 0.1),
-		inset 0 1px 0 rgba(255, 255, 255, 0.8);
+		0 10px 26px rgba(13, 18, 24, 0.18),
+		inset 0 1px 0 rgba(255, 255, 255, 0.15);
 	font-size: 15px;
+}
+
+.hero-card .btn-primary.btn-wide:hover {
+	background: linear-gradient(135deg, #4897c8, #3c89b6);
+	box-shadow:
+		0 14px 32px rgba(13, 18, 24, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .btn-icon {
