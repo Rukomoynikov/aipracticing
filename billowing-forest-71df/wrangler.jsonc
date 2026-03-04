@@ -16,6 +16,13 @@
 	},
 	"compatibility_flags": [
 		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ai-together-signups",
+			"database_id": "ce5b960e-bf9d-4e19-b483-6f42147472d3"
+		}
 	]
 	/**
 	 * Smart Placement
