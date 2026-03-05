@@ -20,6 +20,7 @@ import ForgotPasswordPage from "./components/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import DashboardPage from "./components/auth/DashboardPage";
 import AdminDashboardPage from "./components/auth/AdminDashboardPage";
+import CreateEventPage from "./components/auth/CreateEventPage";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -59,6 +60,22 @@ async function ensureTables(db: CloudflareBindings["DB"]) {
         user_id INTEGER NOT NULL,
         token TEXT NOT NULL UNIQUE,
         expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )`
+    )
+    .run();
+
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        datetime TEXT NOT NULL,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        capacity INTEGER NOT NULL,
+        created_by INTEGER NOT NULL,
         created_at TEXT NOT NULL
       )`
     )
@@ -494,6 +511,77 @@ app.get("/dashboard/admin", async (c) => {
 
   const html = renderToString(<AdminDashboardPage user={user} />);
   return c.html(`<!DOCTYPE html>${html}`);
+});
+
+// ── Admin: Create Event ───────────────────────────────────────────────────────
+
+app.get("/dashboard/admin/events/new", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) {
+    clearSessionCookie(c);
+    return c.redirect("/login");
+  }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const html = renderToString(<CreateEventPage user={user} />);
+  return c.html(`<!DOCTYPE html>${html}`);
+});
+
+app.post("/api/admin/events", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) {
+    clearSessionCookie(c);
+    return c.redirect("/login");
+  }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const formData = await c.req.raw.formData();
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const datetime = String(formData.get("datetime") || "").trim();
+  const latStr = String(formData.get("latitude") || "").trim();
+  const lngStr = String(formData.get("longitude") || "").trim();
+  const capacityStr = String(formData.get("capacity") || "").trim();
+
+  const renderError = (msg: string) => {
+    const html = renderToString(
+      <CreateEventPage
+        user={user}
+        error={msg}
+        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
+      />
+    );
+    return c.html(`<!DOCTYPE html>${html}`, 400);
+  };
+
+  if (!title) return renderError("Title is required.");
+  if (!datetime) return renderError("Date and time are required.");
+
+  if (!latStr || !lngStr) return renderError("Please select a location on the map.");
+  const latitude = parseFloat(latStr);
+  const longitude = parseFloat(lngStr);
+  if (isNaN(latitude) || isNaN(longitude)) return renderError("Invalid location coordinates.");
+  if (latitude < -90 || latitude > 90) return renderError("Latitude must be between -90 and 90.");
+  if (longitude < -180 || longitude > 180) return renderError("Longitude must be between -180 and 180.");
+
+  const capacity = parseInt(capacityStr, 10);
+  if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
+
+  const createdAt = new Date().toISOString();
+  await c.env.DB.prepare(
+    `INSERT INTO events (title, description, datetime, latitude, longitude, capacity, created_by, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+  )
+    .bind(title, description || null, datetime, latitude, longitude, capacity, user.id, createdAt)
+    .run();
+
+  return c.redirect("/dashboard/admin");
 });
 
 // ── Auth: Logout ─────────────────────────────────────────────────────────────
