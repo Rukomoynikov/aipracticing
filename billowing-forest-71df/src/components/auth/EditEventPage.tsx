@@ -13,6 +13,7 @@ export interface EditEventValues {
 interface EditEventPageProps {
   user: { id: number; name: string; email: string; role: string };
   eventId: number;
+  mapsApiKey: string;
   error?: string;
   success?: string;
   values: EditEventValues;
@@ -30,34 +31,61 @@ const mapInitScript = `
   var defaultLng = hasPin ? parseFloat(lngVal) : 0;
   var defaultZoom = hasPin ? 12 : 2;
 
-  var map = L.map('event-map').setView([defaultLat, defaultLng], defaultZoom);
+  window._evMap = L.map('event-map').setView([defaultLat, defaultLng], defaultZoom);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '\u00a9 OpenStreetMap contributors',
     maxZoom: 19
-  }).addTo(map);
+  }).addTo(window._evMap);
 
-  var marker = null;
+  window._evMarker = null;
   if (hasPin) {
-    marker = L.marker([parseFloat(latVal), parseFloat(lngVal)]).addTo(map);
+    window._evMarker = L.marker([parseFloat(latVal), parseFloat(lngVal)]).addTo(window._evMap);
     hint.textContent = 'Selected: ' + latVal + ', ' + lngVal;
   }
 
-  map.on('click', function (e) {
+  window._evMap.on('click', function (e) {
     var lat = e.latlng.lat.toFixed(6);
     var lng = e.latlng.lng.toFixed(6);
     latInput.value = lat;
     lngInput.value = lng;
     hint.textContent = 'Selected: ' + lat + ', ' + lng;
-    if (marker) {
-      marker.setLatLng(e.latlng);
+    if (window._evMarker) {
+      window._evMarker.setLatLng(e.latlng);
     } else {
-      marker = L.marker(e.latlng).addTo(map);
+      window._evMarker = L.marker(e.latlng).addTo(window._evMap);
     }
   });
 })();
 `;
 
-const EditEventPage: FC<EditEventPageProps> = ({ eventId, error, success, values }) => (
+const autocompleteInitScript = `
+function initAutocomplete() {
+  var input = document.getElementById('address-search');
+  var autocomplete = new google.maps.places.Autocomplete(input, {
+    types: ['geocode', 'establishment']
+  });
+  autocomplete.addListener('place_changed', function () {
+    var place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) return;
+    var lat = place.geometry.location.lat();
+    var lng = place.geometry.location.lng();
+    var latStr = lat.toFixed(6);
+    var lngStr = lng.toFixed(6);
+    document.getElementById('ev-lat').value = latStr;
+    document.getElementById('ev-lng').value = lngStr;
+    document.getElementById('map-hint').textContent = 'Selected: ' + latStr + ', ' + lngStr;
+    var latlng = L.latLng(lat, lng);
+    if (window._evMarker) {
+      window._evMarker.setLatLng(latlng);
+    } else {
+      window._evMarker = L.marker(latlng).addTo(window._evMap);
+    }
+    window._evMap.setView(latlng, 15);
+  });
+}
+`;
+
+const EditEventPage: FC<EditEventPageProps> = ({ eventId, mapsApiKey, error, success, values }) => (
   <AuthLayout title="Edit Event">
     <link
       rel="stylesheet"
@@ -122,14 +150,21 @@ const EditEventPage: FC<EditEventPageProps> = ({ eventId, error, success, values
       </div>
 
       <div className="auth-field">
-        <label className="auth-label">Location (click map to update) *</label>
+        <label className="auth-label">Location *</label>
+        <input
+          className="auth-input"
+          id="address-search"
+          type="text"
+          placeholder="Search for an address..."
+          autoComplete="off"
+          style={{ marginBottom: 8 }}
+        />
         <div
           id="event-map"
           style={{
             height: 280,
             borderRadius: 12,
             border: "1px solid rgba(23,32,42,0.14)",
-            marginTop: 2,
           }}
         />
         <p
@@ -162,6 +197,12 @@ const EditEventPage: FC<EditEventPageProps> = ({ eventId, error, success, values
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin="" />
     <script dangerouslySetInnerHTML={{ __html: mapInitScript }} />
+    <script dangerouslySetInnerHTML={{ __html: autocompleteInitScript }} />
+    <script
+      src={`https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=places&callback=initAutocomplete`}
+      async
+      defer
+    />
   </AuthLayout>
 );
 

@@ -13,6 +13,7 @@ declare namespace Cloudflare {
 		APP_URL: string;
 		AWS_ACCESS_KEY_ID: string;
 		AWS_SECRET_ACCESS_KEY: string;
+		GOOGLE_MAPS_API_KEY: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

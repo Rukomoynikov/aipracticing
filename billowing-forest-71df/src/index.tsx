@@ -592,7 +592,7 @@ app.get("/dashboard/admin/events/new", async (c) => {
   }
   if (user.role !== "admin") return c.redirect("/dashboard");
 
-  const html = renderToString(<CreateEventPage user={user} />);
+  const html = renderToString(<CreateEventPage user={user} mapsApiKey={c.env.GOOGLE_MAPS_API_KEY} />);
   return c.html(`<!DOCTYPE html>${html}`);
 });
 
@@ -619,6 +619,7 @@ app.post("/api/admin/events", async (c) => {
     const html = renderToString(
       <CreateEventPage
         user={user}
+        mapsApiKey={c.env.GOOGLE_MAPS_API_KEY}
         error={msg}
         values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
       />
@@ -705,6 +706,7 @@ app.get("/dashboard/admin/events/:id/edit", async (c) => {
     <EditEventPage
       user={user}
       eventId={event.id}
+      mapsApiKey={c.env.GOOGLE_MAPS_API_KEY}
       values={{
         title: event.title,
         description: event.description ?? "",
@@ -749,6 +751,7 @@ app.post("/api/admin/events/:id", async (c) => {
       <EditEventPage
         user={user}
         eventId={eventId}
+        mapsApiKey={c.env.GOOGLE_MAPS_API_KEY}
         error={msg}
         values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
       />

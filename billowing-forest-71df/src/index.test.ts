@@ -49,6 +49,7 @@ function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
       SES_FROM_EMAIL: "no-reply@example.com",
       AWS_ACCESS_KEY_ID: "",
       AWS_SECRET_ACCESS_KEY: "",
+      GOOGLE_MAPS_API_KEY: "",
     } satisfies CloudflareBindings,
     stmt,
     first,
