@@ -36,6 +36,25 @@ const AdminDashboardPage: FC<AdminDashboardPageProps> = ({ user }) => (
     </div>
 
     <a
+      href="/dashboard/admin/events"
+      style={{
+        display: "block",
+        textAlign: "center",
+        padding: "12px 16px",
+        fontSize: 15,
+        fontWeight: 600,
+        color: "#2a5f82",
+        textDecoration: "none",
+        border: "1px solid rgba(60,137,182,0.3)",
+        borderRadius: 12,
+        background: "rgba(60,137,182,0.06)",
+        marginBottom: 10,
+      }}
+    >
+      Manage Events
+    </a>
+
+    <a
       href="/dashboard/admin/events/new"
       style={{
         display: "block",

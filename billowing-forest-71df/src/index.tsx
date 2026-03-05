@@ -21,6 +21,9 @@ import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import DashboardPage from "./components/auth/DashboardPage";
 import AdminDashboardPage from "./components/auth/AdminDashboardPage";
 import CreateEventPage from "./components/auth/CreateEventPage";
+import EventsListPage from "./components/auth/EventsListPage";
+import EditEventPage from "./components/auth/EditEventPage";
+import EventSignupsPage from "./components/auth/EventSignupsPage";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -634,6 +637,190 @@ app.post("/api/admin/events", async (c) => {
     .run();
 
   return c.redirect("/dashboard/admin");
+});
+
+// ── Admin: Events list ────────────────────────────────────────────────────────
+
+app.get("/dashboard/admin/events", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) { clearSessionCookie(c); return c.redirect("/login"); }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const success = c.req.query("success");
+
+  const events = await c.env.DB.prepare(
+    `SELECT e.id, e.title, e.datetime, e.capacity,
+            COUNT(es.id) as signupCount
+     FROM events e
+     LEFT JOIN event_signups es ON es.event_id = e.id AND es.confirmed = 1
+     GROUP BY e.id
+     ORDER BY e.datetime DESC`
+  ).all<{ id: number; title: string; datetime: string; capacity: number; signupCount: number }>();
+
+  const html = renderToString(
+    <EventsListPage events={events.results} success={success ?? undefined} />
+  );
+  return c.html(`<!DOCTYPE html>${html}`);
+});
+
+// ── Admin: Edit Event (form) ──────────────────────────────────────────────────
+
+app.get("/dashboard/admin/events/:id/edit", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) { clearSessionCookie(c); return c.redirect("/login"); }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const eventId = parseInt(c.req.param("id"), 10);
+  if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
+
+  const event = await c.env.DB.prepare(
+    "SELECT id, title, description, datetime, latitude, longitude, capacity FROM events WHERE id = ?1 LIMIT 1"
+  )
+    .bind(eventId)
+    .first<{ id: number; title: string; description: string | null; datetime: string; latitude: number; longitude: number; capacity: number }>();
+
+  if (!event) return c.redirect("/dashboard/admin/events");
+
+  // datetime-local input needs format: YYYY-MM-DDTHH:mm
+  const dtLocal = event.datetime.slice(0, 16);
+
+  const html = renderToString(
+    <EditEventPage
+      user={user}
+      eventId={event.id}
+      values={{
+        title: event.title,
+        description: event.description ?? "",
+        datetime: dtLocal,
+        capacity: String(event.capacity),
+        latitude: String(event.latitude),
+        longitude: String(event.longitude),
+      }}
+    />
+  );
+  return c.html(`<!DOCTYPE html>${html}`);
+});
+
+// ── Admin: Update Event ───────────────────────────────────────────────────────
+
+app.post("/api/admin/events/:id", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) { clearSessionCookie(c); return c.redirect("/login"); }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const eventId = parseInt(c.req.param("id"), 10);
+  if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
+
+  const existing = await c.env.DB.prepare("SELECT id FROM events WHERE id = ?1 LIMIT 1")
+    .bind(eventId)
+    .first<{ id: number }>();
+  if (!existing) return c.redirect("/dashboard/admin/events");
+
+  const formData = await c.req.raw.formData();
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const datetime = String(formData.get("datetime") || "").trim();
+  const latStr = String(formData.get("latitude") || "").trim();
+  const lngStr = String(formData.get("longitude") || "").trim();
+  const capacityStr = String(formData.get("capacity") || "").trim();
+
+  const renderError = (msg: string) => {
+    const html = renderToString(
+      <EditEventPage
+        user={user}
+        eventId={eventId}
+        error={msg}
+        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
+      />
+    );
+    return c.html(`<!DOCTYPE html>${html}`, 400);
+  };
+
+  if (!title) return renderError("Title is required.");
+  if (!datetime) return renderError("Date and time are required.");
+  if (!latStr || !lngStr) return renderError("Please select a location on the map.");
+
+  const latitude = parseFloat(latStr);
+  const longitude = parseFloat(lngStr);
+  if (isNaN(latitude) || isNaN(longitude)) return renderError("Invalid location coordinates.");
+  if (latitude < -90 || latitude > 90) return renderError("Latitude must be between -90 and 90.");
+  if (longitude < -180 || longitude > 180) return renderError("Longitude must be between -180 and 180.");
+
+  const capacity = parseInt(capacityStr, 10);
+  if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
+
+  await c.env.DB.prepare(
+    `UPDATE events SET title = ?1, description = ?2, datetime = ?3, latitude = ?4, longitude = ?5, capacity = ?6
+     WHERE id = ?7`
+  )
+    .bind(title, description || null, datetime, latitude, longitude, capacity, eventId)
+    .run();
+
+  return c.redirect("/dashboard/admin/events?success=Event%20updated%20successfully.");
+});
+
+// ── Admin: Delete Event ───────────────────────────────────────────────────────
+
+app.post("/api/admin/events/:id/delete", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) { clearSessionCookie(c); return c.redirect("/login"); }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const eventId = parseInt(c.req.param("id"), 10);
+  if (!isNaN(eventId)) {
+    await c.env.DB.prepare("DELETE FROM event_signups WHERE event_id = ?1").bind(eventId).run();
+    await c.env.DB.prepare("DELETE FROM events WHERE id = ?1").bind(eventId).run();
+  }
+
+  return c.redirect("/dashboard/admin/events?success=Event%20deleted.");
+});
+
+// ── Admin: Event Signups ──────────────────────────────────────────────────────
+
+app.get("/dashboard/admin/events/:id/signups", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) { clearSessionCookie(c); return c.redirect("/login"); }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const eventId = parseInt(c.req.param("id"), 10);
+  if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
+
+  const event = await c.env.DB.prepare(
+    "SELECT id, title, datetime, capacity FROM events WHERE id = ?1 LIMIT 1"
+  )
+    .bind(eventId)
+    .first<{ id: number; title: string; datetime: string; capacity: number }>();
+
+  if (!event) return c.redirect("/dashboard/admin/events");
+
+  const signups = await c.env.DB.prepare(
+    `SELECT id, name, email, confirmed, created_at
+     FROM event_signups
+     WHERE event_id = ?1
+     ORDER BY confirmed DESC, created_at ASC`
+  )
+    .bind(eventId)
+    .all<{ id: number; name: string; email: string; confirmed: number; created_at: string }>();
+
+  const html = renderToString(
+    <EventSignupsPage event={event} signups={signups.results} />
+  );
+  return c.html(`<!DOCTYPE html>${html}`);
 });
 
 // ── Event signup ─────────────────────────────────────────────────────────────

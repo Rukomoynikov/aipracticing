@@ -11,28 +11,35 @@ vi.mock("./lib/ses", () => ({
 
 /** Build a mock D1Database.
  *  `firstValues` is a queue consumed by each `.bind().first()` call in order.
+ *  `allValues` is a queue consumed by each `.bind().all()` call in order.
  */
-function makeDB(firstValues: unknown[] = []) {
-  let idx = 0;
+function makeDB(firstValues: unknown[] = [], allValues: unknown[][] = []) {
+  let firstIdx = 0;
+  let allIdx = 0;
   const first = vi
     .fn()
-    .mockImplementation(() => Promise.resolve(firstValues[idx++] ?? null));
+    .mockImplementation(() => Promise.resolve(firstValues[firstIdx++] ?? null));
+  const all = vi
+    .fn()
+    .mockImplementation(() => Promise.resolve({ results: allValues[allIdx++] ?? [] }));
 
   const stmt = {
     bind: vi.fn().mockReturnThis(),
     run: vi.fn().mockResolvedValue({ success: true, meta: {} }),
     first,
+    all,
   };
 
   return {
     db: { prepare: vi.fn().mockReturnValue(stmt) } as unknown as D1Database,
     stmt,
     first,
+    all,
   };
 }
 
-function makeEnv(firstValues: unknown[] = []) {
-  const { db, stmt, first } = makeDB(firstValues);
+function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
+  const { db, stmt, first, all } = makeDB(firstValues, allValues);
   return {
     env: {
       DB: db,
@@ -45,6 +52,7 @@ function makeEnv(firstValues: unknown[] = []) {
     } satisfies CloudflareBindings,
     stmt,
     first,
+    all,
   };
 }
 
@@ -614,6 +622,444 @@ describe("POST /api/auth/reset-password – validation", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toBe("/login?confirmed=1");
+  });
+});
+
+// ── GET /dashboard/admin/events ───────────────────────────────────────────────
+
+describe("GET /dashboard/admin/events – auth + renders list", () => {
+  it("redirects to /login when not authenticated", async () => {
+    const { env } = makeEnv();
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/login");
+  });
+
+  it("redirects to /dashboard for non-admin users", async () => {
+    const { env } = makeEnv([{ id: 1, name: "Alice", email: "a@b.com", role: "user" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events", {
+        headers: { Cookie: "session=usertoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard");
+  });
+
+  it("returns 200 with events table for admin with events", async () => {
+    const { env } = makeEnv(
+      [{ id: 2, name: "Admin", email: "admin@b.com", role: "admin" }],
+      [[
+        { id: 1, title: "June Meetup", datetime: "2026-06-01T18:00:00Z", capacity: 50, signupCount: 12 },
+        { id: 2, title: "July Meetup", datetime: "2026-07-01T18:00:00Z", capacity: 30, signupCount: 30 },
+      ]]
+    );
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("June Meetup");
+    expect(body).toContain("July Meetup");
+  });
+
+  it("returns 200 with empty state for admin with no events", async () => {
+    const { env } = makeEnv(
+      [{ id: 2, name: "Admin", email: "admin@b.com", role: "admin" }],
+      [[]]
+    );
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("No events yet");
+  });
+
+  it("shows success banner when ?success= query param is present", async () => {
+    const { env } = makeEnv(
+      [{ id: 2, name: "Admin", email: "admin@b.com", role: "admin" }],
+      [[]]
+    );
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events?success=Event%20deleted.", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("Event deleted.");
+  });
+});
+
+// ── GET /dashboard/admin/events/:id/edit ─────────────────────────────────────
+
+describe("GET /dashboard/admin/events/:id/edit", () => {
+  it("redirects to /login when not authenticated", async () => {
+    const { env } = makeEnv();
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/edit"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/login");
+  });
+
+  it("redirects to /dashboard for non-admin", async () => {
+    const { env } = makeEnv([{ id: 1, name: "Alice", email: "a@b.com", role: "user" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/edit", {
+        headers: { Cookie: "session=usertoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard");
+  });
+
+  it("redirects to events list when event not found", async () => {
+    const { env } = makeEnv([
+      { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+      null, // event not found
+    ]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/999/edit", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard/admin/events");
+  });
+
+  it("returns 200 with pre-filled form for existing event", async () => {
+    const { env } = makeEnv([
+      { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+      {
+        id: 1,
+        title: "June Meetup",
+        description: "Fun event",
+        datetime: "2026-06-01T18:00:00Z",
+        latitude: 51.5,
+        longitude: -0.1,
+        capacity: 50,
+      },
+    ]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/edit", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("June Meetup");
+    expect(body).toContain("Fun event");
+    expect(body).toContain("Save Changes");
+  });
+});
+
+// ── POST /api/admin/events/:id (update) ──────────────────────────────────────
+
+describe("POST /api/admin/events/:id – auth + validation + update", () => {
+  it("redirects to /login when not authenticated", async () => {
+    const { env } = makeEnv();
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/1", { method: "POST", body: new FormData() }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/login");
+  });
+
+  it("redirects to /dashboard for non-admin", async () => {
+    const { env } = makeEnv([{ id: 1, name: "Alice", email: "a@b.com", role: "user" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/1", {
+        method: "POST",
+        body: new FormData(),
+        headers: { Cookie: "session=usertoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard");
+  });
+
+  it("redirects to events list when event not found", async () => {
+    const { env } = makeEnv([
+      { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+      null, // event not found
+    ]);
+    const body = new FormData();
+    body.set("title", "Test");
+    body.set("datetime", "2026-06-01T18:00");
+    body.set("latitude", "51.5");
+    body.set("longitude", "-0.1");
+    body.set("capacity", "50");
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/999", {
+        method: "POST",
+        body,
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard/admin/events");
+  });
+
+  async function updateAsAdmin(fields: Record<string, string>) {
+    const { env } = makeEnv([
+      { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+      { id: 1 }, // event found
+    ]);
+    const body = new FormData();
+    for (const [k, v] of Object.entries(fields)) body.set(k, v);
+    return app.fetch(
+      new Request("http://localhost/api/admin/events/1", {
+        method: "POST",
+        body,
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+  }
+
+  it("rejects missing title", async () => {
+    const res = await updateAsAdmin({
+      title: "",
+      datetime: "2026-06-01T18:00",
+      latitude: "51.5",
+      longitude: "-0.1",
+      capacity: "50",
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Title is required.");
+  });
+
+  it("rejects missing location", async () => {
+    const res = await updateAsAdmin({
+      title: "Meetup",
+      datetime: "2026-06-01T18:00",
+      latitude: "",
+      longitude: "",
+      capacity: "50",
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Please select a location on the map.");
+  });
+
+  it("rejects invalid coordinates", async () => {
+    const res = await updateAsAdmin({
+      title: "Meetup",
+      datetime: "2026-06-01T18:00",
+      latitude: "999",
+      longitude: "0",
+      capacity: "50",
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Latitude must be between");
+  });
+
+  it("rejects capacity below 1", async () => {
+    const res = await updateAsAdmin({
+      title: "Meetup",
+      datetime: "2026-06-01T18:00",
+      latitude: "51.5",
+      longitude: "-0.1",
+      capacity: "0",
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Capacity must be at least 1.");
+  });
+
+  it("redirects to events list with success message on valid update", async () => {
+    const res = await updateAsAdmin({
+      title: "Updated Meetup",
+      datetime: "2026-06-01T18:00",
+      latitude: "51.5",
+      longitude: "-0.1",
+      capacity: "40",
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toContain("/dashboard/admin/events");
+    expect(res.headers.get("Location")).toContain("success=");
+  });
+});
+
+// ── POST /api/admin/events/:id/delete ────────────────────────────────────────
+
+describe("POST /api/admin/events/:id/delete", () => {
+  it("redirects to /login when not authenticated", async () => {
+    const { env } = makeEnv();
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/1/delete", {
+        method: "POST",
+        body: new FormData(),
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/login");
+  });
+
+  it("redirects to /dashboard for non-admin", async () => {
+    const { env } = makeEnv([{ id: 1, name: "Alice", email: "a@b.com", role: "user" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/1/delete", {
+        method: "POST",
+        body: new FormData(),
+        headers: { Cookie: "session=usertoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard");
+  });
+
+  it("redirects to events list with success after deletion", async () => {
+    const { env } = makeEnv([{ id: 2, name: "Admin", email: "admin@b.com", role: "admin" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/1/delete", {
+        method: "POST",
+        body: new FormData(),
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard/admin/events?success=Event%20deleted.");
+  });
+
+  it("still redirects cleanly for non-numeric event id", async () => {
+    const { env } = makeEnv([{ id: 2, name: "Admin", email: "admin@b.com", role: "admin" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/events/notanumber/delete", {
+        method: "POST",
+        body: new FormData(),
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard/admin/events?success=Event%20deleted.");
+  });
+});
+
+// ── GET /dashboard/admin/events/:id/signups ───────────────────────────────────
+
+describe("GET /dashboard/admin/events/:id/signups", () => {
+  it("redirects to /login when not authenticated", async () => {
+    const { env } = makeEnv();
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/signups"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/login");
+  });
+
+  it("redirects to /dashboard for non-admin", async () => {
+    const { env } = makeEnv([{ id: 1, name: "Alice", email: "a@b.com", role: "user" }]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/signups", {
+        headers: { Cookie: "session=usertoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard");
+  });
+
+  it("redirects to events list when event not found", async () => {
+    const { env } = makeEnv([
+      { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+      null, // event not found
+    ]);
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/999/signups", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard/admin/events");
+  });
+
+  it("returns 200 with signups table for a valid event", async () => {
+    const { env } = makeEnv(
+      [
+        { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+        { id: 1, title: "June Meetup", datetime: "2026-06-01T18:00:00Z", capacity: 50 },
+      ],
+      [[
+        { id: 1, name: "Alice", email: "alice@example.com", confirmed: 1, created_at: "2026-05-01T10:00:00Z" },
+        { id: 2, name: "Bob",   email: "bob@example.com",   confirmed: 0, created_at: "2026-05-02T11:00:00Z" },
+      ]]
+    );
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/signups", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("June Meetup");
+    expect(body).toContain("alice@example.com");
+    expect(body).toContain("bob@example.com");
+    expect(body).toContain("Confirmed");
+    expect(body).toContain("Pending");
+  });
+
+  it("returns 200 with empty state when no signups exist", async () => {
+    const { env } = makeEnv(
+      [
+        { id: 2, name: "Admin", email: "admin@b.com", role: "admin" },
+        { id: 1, title: "Empty Event", datetime: "2026-07-01T18:00:00Z", capacity: 20 },
+      ],
+      [[]] // no signups
+    );
+    const res = await app.fetch(
+      new Request("http://localhost/dashboard/admin/events/1/signups", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("No signups yet");
   });
 });
 
