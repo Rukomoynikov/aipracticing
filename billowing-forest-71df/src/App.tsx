@@ -5,6 +5,7 @@ import WhatWeDo from "./components/WhatWeDo";
 import WhoItsFor from "./components/WhoItsFor";
 import HowItWorks from "./components/HowItWorks";
 import MeetingDetails from "./components/MeetingDetails";
+import NextEvent, { type EventData, type CurrentUser } from "./components/NextEvent";
 import Footer from "./components/Footer";
 
 const formScript = `
@@ -60,7 +61,62 @@ const formScript = `
 })();
 `;
 
-const App: FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => (
+const eventSignupScript = `
+(function() {
+  var form = document.getElementById('eventSignupForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    var status = document.getElementById('eventSignupStatus');
+    var btn = form.querySelector('button[type=submit]');
+    var eventId = form.getAttribute('data-event-id');
+
+    if (status) status.textContent = 'Submitting...';
+    if (btn) btn.disabled = true;
+
+    var data = new FormData(form);
+
+    try {
+      var res = await fetch('/api/events/' + eventId + '/signup', {
+        method: 'POST',
+        body: data,
+        headers: { Accept: 'application/json' },
+      });
+
+      var payload = null;
+      var contentType = res.headers.get('Content-Type') || '';
+      if (contentType.includes('application/json')) {
+        payload = await res.json();
+      }
+
+      if (!res.ok || !(payload && payload.ok)) {
+        var errorMessage =
+          (payload && (payload.error || payload.message)) ||
+          'Something went wrong. Please try again.';
+        if (status) status.textContent = errorMessage;
+        if (btn) btn.disabled = false;
+        return;
+      }
+
+      form.style.display = 'none';
+      var success = document.getElementById('eventSignupSuccess');
+      if (success) success.style.display = 'flex';
+    } catch (err) {
+      console.error(err);
+      if (status) status.textContent = 'Something went wrong. Please try again.';
+      if (btn) btn.disabled = false;
+    }
+  });
+})();
+`;
+
+const App: FC<{
+  isAuthenticated?: boolean;
+  nextEvent?: EventData | null;
+  currentUser?: CurrentUser | null;
+}> = ({ isAuthenticated, nextEvent, currentUser }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -100,10 +156,16 @@ const App: FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => (
           <WhoItsFor />
           <HowItWorks />
           <MeetingDetails />
+          {nextEvent && (
+            <NextEvent event={nextEvent} currentUser={currentUser ?? null} />
+          )}
         </main>
         <Footer />
       </div>
       <script dangerouslySetInnerHTML={{ __html: formScript }} />
+      {nextEvent && (
+        <script dangerouslySetInnerHTML={{ __html: eventSignupScript }} />
+      )}
     </body>
   </html>
 );
