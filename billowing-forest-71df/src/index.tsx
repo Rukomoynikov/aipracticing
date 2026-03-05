@@ -109,8 +109,10 @@ function clearSessionCookie(c: Parameters<typeof setCookie>[0]) {
 
 // ── Home ────────────────────────────────────────────────────────────────────
 
-app.get("/", (c) => {
-  const html = renderToString(<App />);
+app.get("/", async (c) => {
+  const token = getCookie(c, SESSION_COOKIE);
+  const isAuthenticated = token ? !!(await getSession(c.env.DB, token).catch(() => null)) : false;
+  const html = renderToString(<App isAuthenticated={isAuthenticated} />);
   return c.html(`<!DOCTYPE html>${html}`);
 });
 

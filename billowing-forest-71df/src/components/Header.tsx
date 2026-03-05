@@ -1,6 +1,6 @@
 import { type FC } from "react";
 
-const Header: FC = () => (
+const Header: FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => (
   <header className="top">
     <div className="top-inner">
       <a className="brand" href="#top" aria-label="AI Together home">
@@ -23,8 +23,19 @@ const Header: FC = () => (
       </nav>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <a className="btn btn-ghost btn-small" href="/login">Sign in</a>
-        <a className="btn btn-primary btn-small" href="/signup">Sign up</a>
+        {isAuthenticated ? (
+          <>
+            <a className="btn btn-ghost btn-small" href="/dashboard">Dashboard</a>
+            <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
+              <button type="submit" className="btn btn-primary btn-small">Sign out</button>
+            </form>
+          </>
+        ) : (
+          <>
+            <a className="btn btn-ghost btn-small" href="/login">Sign in</a>
+            <a className="btn btn-primary btn-small" href="/signup">Sign up</a>
+          </>
+        )}
       </div>
     </div>
   </header>

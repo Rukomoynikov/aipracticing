@@ -60,7 +60,7 @@ const formScript = `
 })();
 `;
 
-const App: FC = () => (
+const App: FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -93,7 +93,7 @@ const App: FC = () => (
     </head>
     <body>
       <div className="page">
-        <Header />
+        <Header isAuthenticated={isAuthenticated} />
         <main id="top" className="main">
           <Hero />
           <WhatWeDo />
