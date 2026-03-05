@@ -22,7 +22,10 @@ const Header: FC = () => (
         <a href="#details">Meeting details</a>
       </nav>
 
-      <a className="btn btn-primary btn-small" href="#signup">Join our next session</a>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <a className="btn btn-ghost btn-small" href="/login">Sign in</a>
+        <a className="btn btn-primary btn-small" href="/signup">Sign up</a>
+      </div>
     </div>
   </header>
 );
