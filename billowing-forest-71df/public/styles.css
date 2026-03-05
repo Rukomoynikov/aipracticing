@@ -976,6 +976,14 @@ textarea:focus {
 	align-items: center;
 }
 
+.next-event-map {
+	margin-top: 16px;
+	height: 220px;
+	border-radius: var(--radius-md);
+	overflow: hidden;
+	border: 1px solid var(--stroke-2);
+}
+
 @media (max-width: 720px) {
 	.next-event-card {
 		grid-template-columns: 1fr;

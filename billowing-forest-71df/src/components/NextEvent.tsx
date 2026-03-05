@@ -6,8 +6,21 @@ export interface EventData {
   description: string | null;
   datetime: string;
   capacity: number;
+  latitude: number;
+  longitude: number;
   signupCount: number;
 }
+
+const mapScript = (lat: number, lng: number) => `
+(function () {
+  var map = L.map('next-event-map', { zoomControl: true, dragging: true, scrollWheelZoom: false }).setView([${lat}, ${lng}], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '\u00a9 OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+  L.marker([${lat}, ${lng}]).addTo(map);
+})();
+`;
 
 export interface CurrentUser {
   name: string;
@@ -34,6 +47,11 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null }> = ({
 
   return (
     <section id="next-event" className="section">
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossOrigin=""
+      />
       <div className="section-head">
         <h2 className="h2">Next event</h2>
         <p className="sub">Join us for our upcoming AI practice session.</p>
@@ -51,6 +69,12 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null }> = ({
               ? `${spotsLeft} of ${event.capacity} spots remaining`
               : "This event is fully booked"}
           </p>
+          <div id="next-event-map" className="next-event-map"></div>
+          <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            crossOrigin=""
+          ></script>
+          <script dangerouslySetInnerHTML={{ __html: mapScript(event.latitude, event.longitude) }} />
         </div>
 
         <div className="next-event-form-wrap">

@@ -135,7 +135,7 @@ app.get("/", async (c) => {
   const isAuthenticated = !!currentUser;
 
   const nextEvent = await c.env.DB.prepare(
-    `SELECT e.id, e.title, e.description, e.datetime, e.capacity,
+    `SELECT e.id, e.title, e.description, e.datetime, e.capacity, e.latitude, e.longitude,
             COUNT(es.id) as signupCount
      FROM events e
      LEFT JOIN event_signups es ON es.event_id = e.id AND es.confirmed = 1
@@ -151,6 +151,8 @@ app.get("/", async (c) => {
       description: string | null;
       datetime: string;
       capacity: number;
+      latitude: number;
+      longitude: number;
       signupCount: number;
     }>()
     .catch(() => null);
