@@ -56,6 +56,13 @@ async function ensureTables(db: CloudflareBindings["DB"]) {
     // Column already exists — ignore
   }
 
+  // Add location_name column for existing databases
+  try {
+    await db.prepare("ALTER TABLE events ADD COLUMN location_name TEXT").run();
+  } catch {
+    // Column already exists — ignore
+  }
+
   await db
     .prepare(
       `CREATE TABLE IF NOT EXISTS sessions (
@@ -135,7 +142,7 @@ app.get("/", async (c) => {
   const isAuthenticated = !!currentUser;
 
   const nextEvent = await c.env.DB.prepare(
-    `SELECT e.id, e.title, e.description, e.datetime, e.capacity, e.latitude, e.longitude,
+    `SELECT e.id, e.title, e.description, e.datetime, e.capacity, e.latitude, e.longitude, e.location_name,
             COUNT(es.id) as signupCount
      FROM events e
      LEFT JOIN event_signups es ON es.event_id = e.id AND es.confirmed = 1
@@ -153,6 +160,7 @@ app.get("/", async (c) => {
       capacity: number;
       latitude: number;
       longitude: number;
+      location_name: string | null;
       signupCount: number;
     }>()
     .catch(() => null);
@@ -614,6 +622,7 @@ app.post("/api/admin/events", async (c) => {
   const latStr = String(formData.get("latitude") || "").trim();
   const lngStr = String(formData.get("longitude") || "").trim();
   const capacityStr = String(formData.get("capacity") || "").trim();
+  const locationName = String(formData.get("location_name") || "").trim();
 
   const renderError = (msg: string) => {
     const html = renderToString(
@@ -621,7 +630,7 @@ app.post("/api/admin/events", async (c) => {
         user={user}
         mapsApiKey={c.env.GOOGLE_MAPS_API_KEY}
         error={msg}
-        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
+        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr, locationName }}
       />
     );
     return c.html(`<!DOCTYPE html>${html}`, 400);
@@ -642,10 +651,10 @@ app.post("/api/admin/events", async (c) => {
 
   const createdAt = new Date().toISOString();
   await c.env.DB.prepare(
-    `INSERT INTO events (title, description, datetime, latitude, longitude, capacity, created_by, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+    `INSERT INTO events (title, description, datetime, latitude, longitude, capacity, location_name, created_by, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
   )
-    .bind(title, description || null, datetime, latitude, longitude, capacity, user.id, createdAt)
+    .bind(title, description || null, datetime, latitude, longitude, capacity, locationName || null, user.id, createdAt)
     .run();
 
   return c.redirect("/dashboard/admin");
@@ -692,10 +701,10 @@ app.get("/dashboard/admin/events/:id/edit", async (c) => {
   if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
 
   const event = await c.env.DB.prepare(
-    "SELECT id, title, description, datetime, latitude, longitude, capacity FROM events WHERE id = ?1 LIMIT 1"
+    "SELECT id, title, description, datetime, latitude, longitude, capacity, location_name FROM events WHERE id = ?1 LIMIT 1"
   )
     .bind(eventId)
-    .first<{ id: number; title: string; description: string | null; datetime: string; latitude: number; longitude: number; capacity: number }>();
+    .first<{ id: number; title: string; description: string | null; datetime: string; latitude: number; longitude: number; capacity: number; location_name: string | null }>();
 
   if (!event) return c.redirect("/dashboard/admin/events");
 
@@ -714,6 +723,7 @@ app.get("/dashboard/admin/events/:id/edit", async (c) => {
         capacity: String(event.capacity),
         latitude: String(event.latitude),
         longitude: String(event.longitude),
+        locationName: event.location_name ?? "",
       }}
     />
   );
@@ -745,6 +755,7 @@ app.post("/api/admin/events/:id", async (c) => {
   const latStr = String(formData.get("latitude") || "").trim();
   const lngStr = String(formData.get("longitude") || "").trim();
   const capacityStr = String(formData.get("capacity") || "").trim();
+  const locationName = String(formData.get("location_name") || "").trim();
 
   const renderError = (msg: string) => {
     const html = renderToString(
@@ -753,7 +764,7 @@ app.post("/api/admin/events/:id", async (c) => {
         eventId={eventId}
         mapsApiKey={c.env.GOOGLE_MAPS_API_KEY}
         error={msg}
-        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr }}
+        values={{ title, description, datetime, capacity: capacityStr, latitude: latStr, longitude: lngStr, locationName }}
       />
     );
     return c.html(`<!DOCTYPE html>${html}`, 400);
@@ -773,10 +784,10 @@ app.post("/api/admin/events/:id", async (c) => {
   if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
 
   await c.env.DB.prepare(
-    `UPDATE events SET title = ?1, description = ?2, datetime = ?3, latitude = ?4, longitude = ?5, capacity = ?6
-     WHERE id = ?7`
+    `UPDATE events SET title = ?1, description = ?2, datetime = ?3, latitude = ?4, longitude = ?5, capacity = ?6, location_name = ?7
+     WHERE id = ?8`
   )
-    .bind(title, description || null, datetime, latitude, longitude, capacity, eventId)
+    .bind(title, description || null, datetime, latitude, longitude, capacity, locationName || null, eventId)
     .run();
 
   return c.redirect("/dashboard/admin/events?success=Event%20updated%20successfully.");

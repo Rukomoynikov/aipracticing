@@ -8,6 +8,7 @@ export interface EventData {
   capacity: number;
   latitude: number;
   longitude: number;
+  location_name: string | null;
   signupCount: number;
 }
 
@@ -64,6 +65,18 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null; isSigne
           <h3 className="next-event-title">{event.title}</h3>
           {event.description && (
             <p className="next-event-desc">{event.description}</p>
+          )}
+          {event.location_name && (
+            <p className="next-event-location">
+              <a
+                href={`https://www.google.com/maps?q=${event.latitude},${event.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="next-event-location-link"
+              >
+                {event.location_name}
+              </a>
+            </p>
           )}
           <p className="next-event-spots">
             {spotsLeft > 0

@@ -8,6 +8,7 @@ export interface EditEventValues {
   capacity: string;
   latitude: string;
   longitude: string;
+  locationName: string;
 }
 
 interface EditEventPageProps {
@@ -74,6 +75,10 @@ function initAutocomplete() {
     document.getElementById('ev-lat').value = latStr;
     document.getElementById('ev-lng').value = lngStr;
     document.getElementById('map-hint').textContent = 'Selected: ' + latStr + ', ' + lngStr;
+    var nameInput = document.getElementById('ev-location-name');
+    if (nameInput && !nameInput.value) {
+      nameInput.value = place.name || '';
+    }
     var latlng = L.latLng(lat, lng);
     if (window._evMarker) {
       window._evMarker.setLatLng(latlng);
@@ -146,6 +151,18 @@ const EditEventPage: FC<EditEventPageProps> = ({ eventId, mapsApiKey, error, suc
           min={1}
           required
           defaultValue={values.capacity}
+        />
+      </div>
+
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="ev-location-name">Venue name</label>
+        <input
+          className="auth-input"
+          id="ev-location-name"
+          name="location_name"
+          type="text"
+          placeholder="e.g. The Hub, Room 2A"
+          defaultValue={values.locationName}
         />
       </div>
 
