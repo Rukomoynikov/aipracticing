@@ -19,6 +19,7 @@ import LoginPage from "./components/auth/LoginPage";
 import ForgotPasswordPage from "./components/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import DashboardPage from "./components/auth/DashboardPage";
+import AdminDashboardPage from "./components/auth/AdminDashboardPage";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -43,6 +44,13 @@ async function ensureTables(db: CloudflareBindings["DB"]) {
       )`
     )
     .run();
+
+  // Add role column for existing databases
+  try {
+    await db.prepare("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'").run();
+  } catch {
+    // Column already exists — ignore
+  }
 
   await db
     .prepare(
@@ -468,6 +476,23 @@ app.get("/dashboard", async (c) => {
   }
 
   const html = renderToString(<DashboardPage user={user} />);
+  return c.html(`<!DOCTYPE html>${html}`);
+});
+
+// ── Auth: Admin Dashboard ─────────────────────────────────────────────────────
+
+app.get("/dashboard/admin", async (c) => {
+  await ensureTables(c.env.DB);
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.redirect("/login");
+  const user = await getSession(c.env.DB, token);
+  if (!user) {
+    clearSessionCookie(c);
+    return c.redirect("/login");
+  }
+  if (user.role !== "admin") return c.redirect("/dashboard");
+
+  const html = renderToString(<AdminDashboardPage user={user} />);
   return c.html(`<!DOCTYPE html>${html}`);
 });
 

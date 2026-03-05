@@ -80,17 +80,17 @@ export async function deleteSession(db: D1Database, token: string): Promise<void
 export async function getSession(
   db: D1Database,
   token: string
-): Promise<{ id: number; name: string; email: string } | null> {
+): Promise<{ id: number; name: string; email: string; role: string } | null> {
   const now = new Date().toISOString();
   const row = await db
     .prepare(
-      `SELECT u.id, u.name, u.email
+      `SELECT u.id, u.name, u.email, COALESCE(u.role, 'user') as role
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ?1 AND s.expires_at > ?2 AND u.confirmed = 1
        LIMIT 1`
     )
     .bind(token, now)
-    .first<{ id: number; name: string; email: string }>();
+    .first<{ id: number; name: string; email: string; role: string }>();
   return row ?? null;
 }
