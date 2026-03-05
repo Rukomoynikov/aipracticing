@@ -116,7 +116,8 @@ const App: FC<{
   isAuthenticated?: boolean;
   nextEvent?: EventData | null;
   currentUser?: CurrentUser | null;
-}> = ({ isAuthenticated, nextEvent, currentUser }) => (
+  isSignedUp?: boolean;
+}> = ({ isAuthenticated, nextEvent, currentUser, isSignedUp }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -157,7 +158,7 @@ const App: FC<{
           <HowItWorks />
           <MeetingDetails />
           {nextEvent && (
-            <NextEvent event={nextEvent} currentUser={currentUser ?? null} />
+            <NextEvent event={nextEvent} currentUser={currentUser ?? null} isSignedUp={isSignedUp ?? false} />
           )}
         </main>
         <Footer />

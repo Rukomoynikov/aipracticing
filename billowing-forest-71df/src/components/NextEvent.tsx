@@ -11,6 +11,11 @@ export interface EventData {
   signupCount: number;
 }
 
+export interface CurrentUser {
+  name: string;
+  email: string;
+}
+
 const mapScript = (lat: number, lng: number) => `
 (function () {
   var map = L.map('next-event-map', { zoomControl: true, dragging: true, scrollWheelZoom: false }).setView([${lat}, ${lng}], 14);
@@ -22,14 +27,10 @@ const mapScript = (lat: number, lng: number) => `
 })();
 `;
 
-export interface CurrentUser {
-  name: string;
-  email: string;
-}
-
-const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null }> = ({
+const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null; isSignedUp: boolean }> = ({
   event,
   currentUser,
+  isSignedUp,
 }) => {
   const spotsLeft = Math.max(0, event.capacity - event.signupCount);
 
@@ -70,15 +71,18 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null }> = ({
               : "This event is fully booked"}
           </p>
           <div id="next-event-map" className="next-event-map"></div>
-          <script
-            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            crossOrigin=""
-          ></script>
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
           <script dangerouslySetInnerHTML={{ __html: mapScript(event.latitude, event.longitude) }} />
         </div>
 
         <div className="next-event-form-wrap">
-          {spotsLeft > 0 ? (
+          {isSignedUp ? (
+            <div className="next-event-already-in">
+              <div className="signup-success-icon">&#10003;</div>
+              <h3 className="h3">You&apos;re already in!</h3>
+              <p className="sub">Can&apos;t wait to meet you there.</p>
+            </div>
+          ) : spotsLeft > 0 ? (
             <>
               <form
                 id="eventSignupForm"

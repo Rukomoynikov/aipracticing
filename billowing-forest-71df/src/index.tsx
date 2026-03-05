@@ -157,10 +157,19 @@ app.get("/", async (c) => {
     }>()
     .catch(() => null);
 
+  let isSignedUp = false;
+  if (currentUser && nextEvent) {
+    const existing = await c.env.DB.prepare(
+      `SELECT id FROM event_signups WHERE event_id = ?1 AND email = ?2 LIMIT 1`
+    ).bind(nextEvent.id, currentUser.email).first().catch(() => null);
+    isSignedUp = !!existing;
+  }
+
   const html = renderToString(
     <App
       isAuthenticated={isAuthenticated}
       nextEvent={nextEvent ?? null}
+      isSignedUp={isSignedUp}
       currentUser={
         currentUser
           ? { name: currentUser.name, email: currentUser.email }
