@@ -45,6 +45,7 @@ export type EventSignupMinAggregateOutputType = {
   name: string | null
   email: string | null
   confirmationToken: string | null
+  cancellationToken: string | null
   confirmed: boolean | null
   createdAt: string | null
 }
@@ -56,6 +57,7 @@ export type EventSignupMaxAggregateOutputType = {
   name: string | null
   email: string | null
   confirmationToken: string | null
+  cancellationToken: string | null
   confirmed: boolean | null
   createdAt: string | null
 }
@@ -67,6 +69,7 @@ export type EventSignupCountAggregateOutputType = {
   name: number
   email: number
   confirmationToken: number
+  cancellationToken: number
   confirmed: number
   createdAt: number
   _all: number
@@ -92,6 +95,7 @@ export type EventSignupMinAggregateInputType = {
   name?: true
   email?: true
   confirmationToken?: true
+  cancellationToken?: true
   confirmed?: true
   createdAt?: true
 }
@@ -103,6 +107,7 @@ export type EventSignupMaxAggregateInputType = {
   name?: true
   email?: true
   confirmationToken?: true
+  cancellationToken?: true
   confirmed?: true
   createdAt?: true
 }
@@ -114,6 +119,7 @@ export type EventSignupCountAggregateInputType = {
   name?: true
   email?: true
   confirmationToken?: true
+  cancellationToken?: true
   confirmed?: true
   createdAt?: true
   _all?: true
@@ -212,6 +218,7 @@ export type EventSignupGroupByOutputType = {
   name: string
   email: string
   confirmationToken: string | null
+  cancellationToken: string | null
   confirmed: boolean | null
   createdAt: string
   _count: EventSignupCountAggregateOutputType | null
@@ -246,6 +253,7 @@ export type EventSignupWhereInput = {
   name?: Prisma.StringFilter<"EventSignup"> | string
   email?: Prisma.StringFilter<"EventSignup"> | string
   confirmationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
+  cancellationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
   confirmed?: Prisma.BoolNullableFilter<"EventSignup"> | boolean | null
   createdAt?: Prisma.StringFilter<"EventSignup"> | string
   event?: Prisma.XOR<Prisma.EventScalarRelationFilter, Prisma.EventWhereInput>
@@ -259,6 +267,7 @@ export type EventSignupOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   confirmationToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmed?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   event?: Prisma.EventOrderByWithRelationInput
@@ -275,6 +284,7 @@ export type EventSignupWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"EventSignup"> | string
   email?: Prisma.StringFilter<"EventSignup"> | string
   confirmationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
+  cancellationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
   confirmed?: Prisma.BoolNullableFilter<"EventSignup"> | boolean | null
   createdAt?: Prisma.StringFilter<"EventSignup"> | string
   event?: Prisma.XOR<Prisma.EventScalarRelationFilter, Prisma.EventWhereInput>
@@ -288,6 +298,7 @@ export type EventSignupOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   confirmationToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationToken?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmed?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.EventSignupCountOrderByAggregateInput
@@ -307,6 +318,7 @@ export type EventSignupScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"EventSignup"> | string
   email?: Prisma.StringWithAggregatesFilter<"EventSignup"> | string
   confirmationToken?: Prisma.StringNullableWithAggregatesFilter<"EventSignup"> | string | null
+  cancellationToken?: Prisma.StringNullableWithAggregatesFilter<"EventSignup"> | string | null
   confirmed?: Prisma.BoolNullableWithAggregatesFilter<"EventSignup"> | boolean | null
   createdAt?: Prisma.StringWithAggregatesFilter<"EventSignup"> | string
 }
@@ -315,6 +327,7 @@ export type EventSignupCreateInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
   event: Prisma.EventCreateNestedOneWithoutSignupsInput
@@ -328,6 +341,7 @@ export type EventSignupUncheckedCreateInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -336,6 +350,7 @@ export type EventSignupUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
   event?: Prisma.EventUpdateOneRequiredWithoutSignupsNestedInput
@@ -349,6 +364,7 @@ export type EventSignupUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -360,6 +376,7 @@ export type EventSignupCreateManyInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -368,6 +385,7 @@ export type EventSignupUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -379,6 +397,7 @@ export type EventSignupUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -400,6 +419,7 @@ export type EventSignupCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   confirmationToken?: Prisma.SortOrder
+  cancellationToken?: Prisma.SortOrder
   confirmed?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -417,6 +437,7 @@ export type EventSignupMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   confirmationToken?: Prisma.SortOrder
+  cancellationToken?: Prisma.SortOrder
   confirmed?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -428,6 +449,7 @@ export type EventSignupMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   confirmationToken?: Prisma.SortOrder
+  cancellationToken?: Prisma.SortOrder
   confirmed?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -534,6 +556,7 @@ export type EventSignupCreateWithoutUserInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
   event: Prisma.EventCreateNestedOneWithoutSignupsInput
@@ -545,6 +568,7 @@ export type EventSignupUncheckedCreateWithoutUserInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -584,6 +608,7 @@ export type EventSignupScalarWhereInput = {
   name?: Prisma.StringFilter<"EventSignup"> | string
   email?: Prisma.StringFilter<"EventSignup"> | string
   confirmationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
+  cancellationToken?: Prisma.StringNullableFilter<"EventSignup"> | string | null
   confirmed?: Prisma.BoolNullableFilter<"EventSignup"> | boolean | null
   createdAt?: Prisma.StringFilter<"EventSignup"> | string
 }
@@ -592,6 +617,7 @@ export type EventSignupCreateWithoutEventInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
   user?: Prisma.UserCreateNestedOneWithoutEventSignupsInput
@@ -603,6 +629,7 @@ export type EventSignupUncheckedCreateWithoutEventInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -638,6 +665,7 @@ export type EventSignupCreateManyUserInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -646,6 +674,7 @@ export type EventSignupUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
   event?: Prisma.EventUpdateOneRequiredWithoutSignupsNestedInput
@@ -657,6 +686,7 @@ export type EventSignupUncheckedUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -667,6 +697,7 @@ export type EventSignupUncheckedUpdateManyWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -677,6 +708,7 @@ export type EventSignupCreateManyEventInput = {
   name: string
   email: string
   confirmationToken?: string | null
+  cancellationToken?: string | null
   confirmed?: boolean | null
   createdAt: string
 }
@@ -685,6 +717,7 @@ export type EventSignupUpdateWithoutEventInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
   user?: Prisma.UserUpdateOneWithoutEventSignupsNestedInput
@@ -696,6 +729,7 @@ export type EventSignupUncheckedUpdateWithoutEventInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -706,6 +740,7 @@ export type EventSignupUncheckedUpdateManyWithoutEventInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   confirmationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   confirmed?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -719,6 +754,7 @@ export type EventSignupSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   name?: boolean
   email?: boolean
   confirmationToken?: boolean
+  cancellationToken?: boolean
   confirmed?: boolean
   createdAt?: boolean
   event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
@@ -732,6 +768,7 @@ export type EventSignupSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   name?: boolean
   email?: boolean
   confirmationToken?: boolean
+  cancellationToken?: boolean
   confirmed?: boolean
   createdAt?: boolean
   event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
@@ -745,6 +782,7 @@ export type EventSignupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   name?: boolean
   email?: boolean
   confirmationToken?: boolean
+  cancellationToken?: boolean
   confirmed?: boolean
   createdAt?: boolean
   event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
@@ -758,11 +796,12 @@ export type EventSignupSelectScalar = {
   name?: boolean
   email?: boolean
   confirmationToken?: boolean
+  cancellationToken?: boolean
   confirmed?: boolean
   createdAt?: boolean
 }
 
-export type EventSignupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventId" | "userId" | "name" | "email" | "confirmationToken" | "confirmed" | "createdAt", ExtArgs["result"]["eventSignup"]>
+export type EventSignupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventId" | "userId" | "name" | "email" | "confirmationToken" | "cancellationToken" | "confirmed" | "createdAt", ExtArgs["result"]["eventSignup"]>
 export type EventSignupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   event?: boolean | Prisma.EventDefaultArgs<ExtArgs>
   user?: boolean | Prisma.EventSignup$userArgs<ExtArgs>
@@ -789,6 +828,7 @@ export type $EventSignupPayload<ExtArgs extends runtime.Types.Extensions.Interna
     name: string
     email: string
     confirmationToken: string | null
+    cancellationToken: string | null
     confirmed: boolean | null
     createdAt: string
   }, ExtArgs["result"]["eventSignup"]>
@@ -1222,6 +1262,7 @@ export interface EventSignupFieldRefs {
   readonly name: Prisma.FieldRef<"EventSignup", 'String'>
   readonly email: Prisma.FieldRef<"EventSignup", 'String'>
   readonly confirmationToken: Prisma.FieldRef<"EventSignup", 'String'>
+  readonly cancellationToken: Prisma.FieldRef<"EventSignup", 'String'>
   readonly confirmed: Prisma.FieldRef<"EventSignup", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"EventSignup", 'String'>
 }

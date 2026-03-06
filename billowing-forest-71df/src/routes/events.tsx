@@ -3,7 +3,7 @@ import { getCookie } from "hono/cookie";
 import { SESSION_COOKIE } from "../lib/session";
 import { generateToken, getSession } from "../lib/auth";
 import { sendEmail } from "../lib/ses";
-import { eventSignupConfirmationEmail } from "../lib/emailTemplates";
+import { eventSignupConfirmationEmail, eventSignupThankYouEmail } from "../lib/emailTemplates";
 import { getPrisma } from "../lib/prisma";
 
 const events = new Hono<{ Bindings: CloudflareBindings }>();
@@ -72,7 +72,8 @@ events.post("/api/events/:eventId/signup", async (c) => {
   const createdAt = new Date().toISOString();
 
   if (sessionUser) {
-    // Authenticated: direct signup, no email needed
+    // Authenticated: direct signup, send thank-you email
+    const cancelToken = generateToken();
     if (existing) {
       await prisma.eventSignup.update({
         where: { id: existing.id },
@@ -81,6 +82,7 @@ events.post("/api/events/:eventId/signup", async (c) => {
           userId: sessionUser.id,
           name,
           confirmationToken: null,
+          cancellationToken: cancelToken,
         },
       });
     } else {
@@ -92,9 +94,41 @@ events.post("/api/events/:eventId/signup", async (c) => {
           email,
           confirmed: true,
           createdAt,
+          cancellationToken: cancelToken,
         },
       });
     }
+
+    const cancelUrl = `${c.env.APP_URL}/api/events/cancel?token=${cancelToken}`;
+    const eventDate = new Date(event.dateTime).toLocaleDateString("en-GB", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (c.env.AWS_ACCESS_KEY_ID && c.env.AWS_SECRET_ACCESS_KEY) {
+      const { html: emailHtml, text: emailText } = eventSignupThankYouEmail(
+        event.title,
+        eventDate,
+        cancelUrl
+      );
+      await sendEmail({
+        to: email,
+        subject: `You're in! ${event.title}`,
+        htmlBody: emailHtml,
+        textBody: emailText,
+        fromEmail: c.env.SES_FROM_EMAIL,
+        region: c.env.AWS_REGION,
+        accessKeyId: c.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+      });
+    } else {
+      console.log(`[dev] Cancel URL for ${email}: ${cancelUrl}`);
+    }
+
     return c.json({ ok: true, message: "You're signed up! See you there." });
   } else {
     // Not authenticated: pending signup, send confirmation email
@@ -197,6 +231,7 @@ events.get("/api/events/confirm", async (c) => {
     select: {
       id: true,
       eventId: true,
+      email: true,
       confirmed: true,
       event: {
         select: {
@@ -209,7 +244,15 @@ events.get("/api/events/confirm", async (c) => {
 
   if (!signup) return errorHtml("This confirmation link is invalid or has already been used.");
 
+  const eventDate = new Date(signup.event.dateTime).toLocaleDateString("en-GB", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   if (signup.confirmed !== true) {
+    const cancelToken = generateToken();
     await prisma.eventSignup.update({
       where: {
         id: signup.id,
@@ -217,16 +260,31 @@ events.get("/api/events/confirm", async (c) => {
       data: {
         confirmed: true,
         confirmationToken: null,
+        cancellationToken: cancelToken,
       },
     });
-  }
 
-  const eventDate = new Date(signup.event.dateTime).toLocaleDateString("en-GB", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    const cancelUrl = `${c.env.APP_URL}/api/events/cancel?token=${cancelToken}`;
+    if (c.env.AWS_ACCESS_KEY_ID && c.env.AWS_SECRET_ACCESS_KEY) {
+      const { html: emailHtml, text: emailText } = eventSignupThankYouEmail(
+        signup.event.title,
+        eventDate,
+        cancelUrl
+      );
+      await sendEmail({
+        to: signup.email,
+        subject: `You're in! ${signup.event.title}`,
+        htmlBody: emailHtml,
+        textBody: emailText,
+        fromEmail: c.env.SES_FROM_EMAIL,
+        region: c.env.AWS_REGION,
+        accessKeyId: c.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+      });
+    } else {
+      console.log(`[dev] Cancel URL for ${signup.email}: ${cancelUrl}`);
+    }
+  }
 
   return c.html(`<!DOCTYPE html>
 <html lang="en">
@@ -252,6 +310,84 @@ events.get("/api/events/confirm", async (c) => {
     <p class="event">${signup.event.title}</p>
     <p>${eventDate}</p>
     <p style="margin-top:16px;">See you there!</p>
+    <p style="margin-top:24px;"><a href="/" style="color:#2b6a92;">Back to home</a></p>
+  </div>
+</body>
+</html>`);
+});
+
+events.get("/api/events/cancel", async (c) => {
+  const prisma = getPrisma(c.env.DB);
+
+  const token = c.req.query("token");
+
+  const errorHtml = (message: string) =>
+    c.html(
+      `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cancellation failed</title>
+  <style>
+    body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+           background: #f9fafb; font-family: system-ui, -apple-system, sans-serif; }
+    .card { background: #fff; border-radius: 12px; padding: 48px 40px; max-width: 420px; width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    h1 { margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #18181b; }
+    p { margin: 0; font-size: 15px; color: #52525b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Cancellation failed</h1>
+    <p>${message}</p>
+  </div>
+</body>
+</html>`,
+      400
+    );
+
+  if (!token) return errorHtml("No cancellation token provided.");
+
+  const signup = await prisma.eventSignup.findFirst({
+    where: { cancellationToken: token },
+    select: {
+      id: true,
+      event: {
+        select: { title: true },
+      },
+    },
+  });
+
+  if (!signup) return errorHtml("This cancellation link is invalid or has already been used.");
+
+  await prisma.eventSignup.update({
+    where: { id: signup.id },
+    data: { confirmed: false, cancellationToken: null },
+  });
+
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spot freed</title>
+  <style>
+    body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+           background: #f9fafb; font-family: system-ui, -apple-system, sans-serif; }
+    .card { background: #fff; border-radius: 12px; padding: 48px 40px; max-width: 420px; width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .icon { font-size: 40px; margin-bottom: 16px; }
+    h1 { margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #18181b; }
+    p { margin: 0 0 8px; font-size: 15px; color: #52525b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">&#128075;</div>
+    <h1>You're off the list</h1>
+    <p>Your spot for <strong>${signup.event.title}</strong> has been freed. We hope to see you at a future event!</p>
     <p style="margin-top:24px;"><a href="/" style="color:#2b6a92;">Back to home</a></p>
   </div>
 </body>

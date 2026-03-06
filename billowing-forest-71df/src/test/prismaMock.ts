@@ -42,6 +42,7 @@ function normalizeEventSignup(value: unknown): unknown {
   if ("event_id" in row) row.eventId = row.event_id;
   if ("user_id" in row) row.userId = row.user_id;
   if ("confirmation_token" in row) row.confirmationToken = row.confirmation_token;
+  if ("cancellation_token" in row) row.cancellationToken = row.cancellation_token;
   if ("created_at" in row) row.createdAt = row.created_at;
   if ("confirmed" in row) row.confirmed = toBool(row.confirmed);
   if ("title" in row && "datetime" in row && !("event" in row)) {

@@ -121,6 +121,7 @@ export const EventSignupScalarFieldEnum = {
   name: 'name',
   email: 'email',
   confirmationToken: 'confirmationToken',
+  cancellationToken: 'cancellationToken',
   confirmed: 'confirmed',
   createdAt: 'createdAt'
 } as const

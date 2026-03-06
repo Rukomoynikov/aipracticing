@@ -63,6 +63,7 @@ model EventSignup {
   name              String
   email             String
   confirmationToken String? @map("confirmation_token")
+  cancellationToken String? @map("cancellation_token")
   confirmed         Boolean? @default(false)
   createdAt         String  @map("created_at")
   event             Event   @relation(fields: [eventId], references: [id])

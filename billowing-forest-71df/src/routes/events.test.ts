@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 import events from "./events";
 import { getPrisma } from "../lib/prisma";
+import { sendEmail } from "../lib/ses";
 import { createPrismaMock } from "../test/prismaMock";
 
 vi.mock("../lib/ses", () => ({ sendEmail: vi.fn().mockResolvedValue(undefined) }));
@@ -40,6 +41,10 @@ function makeApp() {
   app.route("/", events);
   return app;
 }
+
+beforeEach(() => {
+  vi.mocked(sendEmail).mockClear();
+});
 
 const ctx = {} as ExecutionContext;
 
@@ -157,6 +162,25 @@ describe("POST /api/events/:eventId/signup", () => {
     expect(json.message).not.toContain("inbox");
   });
 
+  it("sends thank-you email with cancel link for authenticated user", async () => {
+    await post(
+      1,
+      { name: "Alice", email: "alice@example.com" },
+      [
+        openEvent,
+        { id: 1, name: "Alice", email: "alice@example.com", role: "user" },
+        null,
+      ],
+      "session=validtoken"
+    );
+    expect(vi.mocked(sendEmail)).toHaveBeenCalledOnce();
+    const call = vi.mocked(sendEmail).mock.calls[0][0];
+    expect(call.to).toBe("alice@example.com");
+    expect(call.subject).toContain("You're in!");
+    expect(call.htmlBody).toContain("Free my spot");
+    expect(call.htmlBody).toContain("/api/events/cancel?token=");
+  });
+
   it("updates an existing unconfirmed signup for an authenticated user", async () => {
     // with cookie → firstValues: event, getSession, existing (unconfirmed)
     const res = await post(
@@ -206,6 +230,7 @@ describe("GET /api/events/confirm", () => {
         id: 5,
         event_id: 1,
         confirmed: 0,
+        email: "user@example.com",
         title: "June Meetup",
         datetime: "2026-06-01T18:00:00Z",
       },
@@ -221,12 +246,56 @@ describe("GET /api/events/confirm", () => {
     expect(body).toContain("June Meetup");
   });
 
+  it("sends thank-you email with cancel link on first confirmation", async () => {
+    const { env } = makeEnv([
+      {
+        id: 5,
+        event_id: 1,
+        confirmed: 0,
+        email: "user@example.com",
+        title: "June Meetup",
+        datetime: "2026-06-01T18:00:00Z",
+      },
+    ]);
+    await makeApp().fetch(
+      new Request("http://localhost/api/events/confirm?token=validtoken"),
+      env,
+      ctx
+    );
+    expect(vi.mocked(sendEmail)).toHaveBeenCalledOnce();
+    const call = vi.mocked(sendEmail).mock.calls[0][0];
+    expect(call.to).toBe("user@example.com");
+    expect(call.subject).toContain("You're in!");
+    expect(call.htmlBody).toContain("Free my spot");
+    expect(call.htmlBody).toContain("/api/events/cancel?token=");
+  });
+
+  it("does not send thank-you email if signup was already confirmed", async () => {
+    const { env } = makeEnv([
+      {
+        id: 5,
+        event_id: 1,
+        confirmed: 1,
+        email: "user@example.com",
+        title: "June Meetup",
+        datetime: "2026-06-01T18:00:00Z",
+      },
+    ]);
+    await makeApp().fetch(
+      new Request("http://localhost/api/events/confirm?token=usedtoken"),
+      env,
+      ctx
+    );
+    expect(vi.mocked(sendEmail)).not.toHaveBeenCalled();
+  });
+
   it("still returns 200 if signup was already confirmed", async () => {
     const { env } = makeEnv([
       {
         id: 5,
         event_id: 1,
         confirmed: 1,
+        email: "user@example.com",
         title: "June Meetup",
         datetime: "2026-06-01T18:00:00Z",
       },
@@ -237,5 +306,52 @@ describe("GET /api/events/confirm", () => {
       ctx
     );
     expect(res.status).toBe(200);
+  });
+});
+
+// ── GET /api/events/cancel ────────────────────────────────────────────────────
+
+describe("GET /api/events/cancel", () => {
+  it("returns 400 when no token is provided", async () => {
+    const { env } = makeEnv();
+    const res = await makeApp().fetch(
+      new Request("http://localhost/api/events/cancel"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("No cancellation token provided.");
+  });
+
+  it("returns 400 for an invalid or already-used token", async () => {
+    const { env } = makeEnv([null]); // signup not found
+    const res = await makeApp().fetch(
+      new Request("http://localhost/api/events/cancel?token=badtoken"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("invalid or has already been used");
+  });
+
+  it("returns 200 and frees the spot for a valid token", async () => {
+    const { env } = makeEnv([
+      {
+        id: 5,
+        event_id: 1,
+        cancellation_token: "canceltoken",
+        title: "June Meetup",
+        datetime: "2026-06-01T18:00:00Z",
+      },
+    ]);
+    const res = await makeApp().fetch(
+      new Request("http://localhost/api/events/cancel?token=canceltoken"),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("June Meetup");
+    expect(body).toContain("freed");
   });
 });
