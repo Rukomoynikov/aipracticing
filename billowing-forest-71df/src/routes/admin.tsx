@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { getCookie } from "hono/cookie";
 import { renderToString } from "react-dom/server";
 import { ensureTables } from "../lib/db";
@@ -12,7 +12,7 @@ import EventSignupsPage from "../components/auth/EventSignupsPage";
 
 const admin = new Hono<{ Bindings: CloudflareBindings }>();
 
-async function requireAdmin(c: Parameters<typeof getCookie>[0] & { env: CloudflareBindings }) {
+async function requireAdmin(c: Context<{ Bindings: CloudflareBindings }>) {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return { user: null, redirect: "/login" as const };
   const user = await getSession(c.env.DB, token);
@@ -100,7 +100,7 @@ admin.post("/api/admin/events", async (c) => {
 
 admin.get("/dashboard/admin/events", async (c) => {
   await ensureTables(c.env.DB);
-  const { user, redirect } = await requireAdmin(c);
+  const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const success = c.req.query("success");
@@ -224,7 +224,7 @@ admin.post("/api/admin/events/:id", async (c) => {
 
 admin.post("/api/admin/events/:id/delete", async (c) => {
   await ensureTables(c.env.DB);
-  const { user, redirect } = await requireAdmin(c);
+  const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);
@@ -240,7 +240,7 @@ admin.post("/api/admin/events/:id/delete", async (c) => {
 
 admin.get("/dashboard/admin/events/:id/signups", async (c) => {
   await ensureTables(c.env.DB);
-  const { user, redirect } = await requireAdmin(c);
+  const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);

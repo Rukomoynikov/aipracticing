@@ -18,7 +18,7 @@ describe("ensureTables", () => {
   it("creates users, sessions, events, and event_signups tables", async () => {
     const { db } = makeDB();
     await ensureTables(db);
-    const sqls = (db.prepare as ReturnType<typeof vi.fn>).mock.calls.map(([s]: [string]) => s);
+    const sqls = (db.prepare as ReturnType<typeof vi.fn>).mock.calls.map((args: unknown[]) => args[0] as string);
     expect(sqls.some(s => s.includes("CREATE TABLE IF NOT EXISTS users"))).toBe(true);
     expect(sqls.some(s => s.includes("CREATE TABLE IF NOT EXISTS sessions"))).toBe(true);
     expect(sqls.some(s => s.includes("CREATE TABLE IF NOT EXISTS events"))).toBe(true);
@@ -28,7 +28,7 @@ describe("ensureTables", () => {
   it("runs ALTER TABLE migrations for role and location_name columns", async () => {
     const { db } = makeDB();
     await ensureTables(db);
-    const sqls = (db.prepare as ReturnType<typeof vi.fn>).mock.calls.map(([s]: [string]) => s);
+    const sqls = (db.prepare as ReturnType<typeof vi.fn>).mock.calls.map((args: unknown[]) => args[0] as string);
     expect(sqls.some(s => s.includes("ADD COLUMN role"))).toBe(true);
     expect(sqls.some(s => s.includes("ADD COLUMN location_name"))).toBe(true);
   });
