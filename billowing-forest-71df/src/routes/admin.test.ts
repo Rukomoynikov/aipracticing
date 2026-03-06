@@ -8,7 +8,11 @@ vi.mock("../lib/ses", () => ({ sendEmail: vi.fn() }));
 vi.mock("../lib/prisma", () => ({ getPrisma: vi.fn() }));
 
 // first() calls order documented per describe block.
-function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
+function makeEnv(
+  firstValues: unknown[] = [],
+  allValues: unknown[][] = [],
+  mapsApiKey = "test-maps-key"
+) {
   const prisma = createPrismaMock(firstValues, allValues);
   vi.mocked(getPrisma).mockReturnValue(prisma);
 
@@ -21,7 +25,7 @@ function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
       SES_FROM_EMAIL: "no-reply@example.com",
       AWS_ACCESS_KEY_ID: "",
       AWS_SECRET_ACCESS_KEY: "",
-      GOOGLE_MAPS_API_KEY: "test-maps-key",
+      GOOGLE_MAPS_API_KEY: mapsApiKey,
     } satisfies CloudflareBindings,
   };
 }
@@ -75,6 +79,21 @@ describe("GET /dashboard/admin/events/new", () => {
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/html");
+  });
+
+  it("does not load Google Places script when maps api key is missing", async () => {
+    const { env } = makeEnv([adminUser], [], "");
+    const res = await makeApp().fetch(
+      new Request("http://localhost/dashboard/admin/events/new", {
+        headers: { Cookie: "session=admintoken" },
+      }),
+      env,
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("GOOGLE_MAPS_API_KEY is not configured.");
+    expect(body).not.toContain("maps.googleapis.com/maps/api/js");
   });
 });
 
