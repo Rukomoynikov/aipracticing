@@ -113,7 +113,9 @@ events.post("/api/events/:eventId/signup", async (c) => {
       const { html: emailHtml, text: emailText } = eventSignupThankYouEmail(
         event.title,
         eventDate,
-        cancelUrl
+        cancelUrl,
+        new Date(event.dateTime),
+        `${c.env.APP_URL}/api/events/${event.id}/calendar.ics`
       );
       await sendEmail({
         to: email,
@@ -188,6 +190,44 @@ events.post("/api/events/:eventId/signup", async (c) => {
 
     return c.json({ ok: true, message: "Check your inbox to confirm your spot." });
   }
+});
+
+events.get("/api/events/:eventId/calendar.ics", async (c) => {
+  const prisma = getPrisma(c.env.DB);
+  const eventId = parseInt(c.req.param("eventId"), 10);
+  if (isNaN(eventId)) return c.text("Invalid event ID.", 400);
+
+  const event = await prisma.event.findFirst({
+    where: { id: eventId },
+    select: { title: true, dateTime: true },
+  });
+  if (!event) return c.text("Event not found.", 404);
+
+  const start = new Date(event.dateTime);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const now = fmt(new Date());
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//AI Together//EN",
+    "BEGIN:VEVENT",
+    `UID:event-${eventId}@aitogether`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${event.title}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  return new Response(ics, {
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename="event-${eventId}.ics"`,
+    },
+  });
 });
 
 events.get("/api/events/confirm", async (c) => {
@@ -269,7 +309,9 @@ events.get("/api/events/confirm", async (c) => {
       const { html: emailHtml, text: emailText } = eventSignupThankYouEmail(
         signup.event.title,
         eventDate,
-        cancelUrl
+        cancelUrl,
+        new Date(signup.event.dateTime),
+        `${c.env.APP_URL}/api/events/${signup.eventId}/calendar.ics`
       );
       await sendEmail({
         to: signup.email,

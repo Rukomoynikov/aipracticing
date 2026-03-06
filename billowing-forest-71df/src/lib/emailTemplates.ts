@@ -118,11 +118,28 @@ If you didn't sign up for this event, you can safely ignore this email.`;
   return { html, text };
 }
 
+function toCalendarDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+function googleCalendarUrl(title: string, start: Date): string {
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${toCalendarDate(start)}/${toCalendarDate(end)}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export function eventSignupThankYouEmail(
   eventTitle: string,
   eventDateStr: string,
-  cancelUrl: string
+  cancelUrl: string,
+  eventDateTime: Date,
+  icsUrl: string
 ): { html: string; text: string } {
+  const calendarUrl = googleCalendarUrl(eventTitle, eventDateTime);
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -148,7 +165,15 @@ export function eventSignupThankYouEmail(
                 ${eventTitle}<br/>
                 <span style="font-weight:400;font-size:15px;color:#52525b;">${eventDateStr}</span>
               </p>
-              <p style="margin:0 0 32px;font-size:16px;color:#52525b;line-height:1.6;">See you there!</p>
+              <p style="margin:0 0 24px;font-size:16px;color:#52525b;line-height:1.6;">See you there!</p>
+              <a href="${calendarUrl}"
+                 style="display:inline-block;background:#f4f4f5;color:#18181b;font-size:14px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:8px;letter-spacing:-0.2px;margin-bottom:32px;margin-right:8px;">
+                Google Calendar
+              </a>
+              <a href="${icsUrl}"
+                 style="display:inline-block;background:#f4f4f5;color:#18181b;font-size:14px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:8px;letter-spacing:-0.2px;margin-bottom:32px;">
+                Apple Calendar
+              </a>
               <hr style="border:none;border-top:1px solid #e4e4e7;margin:0 0 24px;" />
               <p style="margin:0 0 16px;font-size:14px;color:#71717a;line-height:1.6;">Can't make it? Please let us know so someone else can take your spot.</p>
               <a href="${cancelUrl}"
@@ -171,6 +196,9 @@ ${eventTitle}
 ${eventDateStr}
 
 See you there!
+
+Add to Google Calendar: ${calendarUrl}
+Add to Apple Calendar (.ics): ${icsUrl}
 
 ---
 Can't make it? Please let us know so someone else can take your spot:
