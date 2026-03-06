@@ -27,8 +27,7 @@
 	"vars": {
 		"AWS_REGION": "eu-central-1",
 		"SES_FROM_EMAIL": "noreply@aitogether.club",
-		"APP_URL": "https://aitogether.club",
-		"GOOGLE_MAPS_API_KEY": ""
+		"APP_URL": "https://aitogether.club"
 	}
 	/**
 	 * Smart Placement
