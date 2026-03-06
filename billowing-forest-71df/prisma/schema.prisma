@@ -1,0 +1,86 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "workerd"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider     = "sqlite"
+  relationMode = "prisma"
+}
+
+model User {
+  id                Int           @id @default(autoincrement())
+  name              String
+  email             String        @unique
+  passwordHash      String        @map("password_hash")
+  confirmed         Boolean?      @default(false)
+  confirmationToken String?       @map("confirmation_token")
+  resetToken        String?       @map("reset_token")
+  resetTokenExpires String?       @map("reset_token_expires")
+  createdAt         String        @map("created_at")
+  role              String        @default("user")
+  sessions          Session[]
+  eventsCreated     Event[]       @relation("EventCreatedBy")
+  eventSignups      EventSignup[]
+
+  @@map("users")
+}
+
+model Session {
+  id        Int    @id @default(autoincrement())
+  userId    Int    @map("user_id")
+  token     String @unique
+  expiresAt String @map("expires_at")
+  createdAt String @map("created_at")
+  user      User   @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+}
+
+model Event {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  dateTime     String        @map("datetime")
+  latitude     Float
+  longitude    Float
+  capacity     Int
+  createdBy    Int           @map("created_by")
+  createdAt    String        @map("created_at")
+  locationName String?       @map("location_name")
+  creator      User          @relation("EventCreatedBy", fields: [createdBy], references: [id])
+  signups      EventSignup[]
+
+  @@map("events")
+}
+
+model EventSignup {
+  id                Int     @id @default(autoincrement())
+  eventId           Int     @map("event_id")
+  userId            Int?    @map("user_id")
+  name              String
+  email             String
+  confirmationToken String? @map("confirmation_token")
+  confirmed         Boolean? @default(false)
+  createdAt         String  @map("created_at")
+  event             Event   @relation(fields: [eventId], references: [id])
+  user              User?   @relation(fields: [userId], references: [id])
+
+  @@map("event_signups")
+}
+
+model Signup {
+  id                Int      @id @default(autoincrement())
+  name              String?
+  email             String
+  interest          String?
+  createdAt         String   @map("created_at")
+  sourceIp          String?  @map("source_ip")
+  userAgent         String?  @map("user_agent")
+  confirmationToken String?  @map("confirmation_token")
+  confirmed         Boolean? @default(false)
+
+  @@map("signups")
+}

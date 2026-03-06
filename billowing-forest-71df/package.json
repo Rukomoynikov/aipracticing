@@ -5,11 +5,18 @@
 		"dev": "wrangler dev",
 		"deploy": "wrangler deploy --minify",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
+		"prisma:generate": "prisma generate",
+		"db:reset:local": "node scripts/db-reset-local.mjs",
+		"db:init:local": "node scripts/db-init-local.mjs",
+		"db:verify:local": "node scripts/db-verify.mjs local",
+		"db:verify:remote": "node scripts/db-verify.mjs remote",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@prisma/adapter-d1": "^7.4.2",
+		"@prisma/client": "^7.4.2",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"aws4fetch": "^1.0.20",
@@ -19,6 +26,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^25.3.3",
+		"prisma": "^7.4.2",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.18",
 		"wrangler": "^4.70.0"

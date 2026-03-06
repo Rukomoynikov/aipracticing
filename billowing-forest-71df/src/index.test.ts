@@ -1,48 +1,24 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import app from "./index";
 import { hashPassword } from "./lib/auth";
+import { getPrisma } from "./lib/prisma";
+import { createPrismaMock } from "./test/prismaMock";
 
 // Prevent real AWS SES calls in every test
 vi.mock("./lib/ses", () => ({
   sendEmail: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("./lib/prisma", () => ({ getPrisma: vi.fn() }));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Build a mock D1Database.
- *  `firstValues` is a queue consumed by each `.bind().first()` call in order.
- *  `allValues` is a queue consumed by each `.bind().all()` call in order.
- */
-function makeDB(firstValues: unknown[] = [], allValues: unknown[][] = []) {
-  let firstIdx = 0;
-  let allIdx = 0;
-  const first = vi
-    .fn()
-    .mockImplementation(() => Promise.resolve(firstValues[firstIdx++] ?? null));
-  const all = vi
-    .fn()
-    .mockImplementation(() => Promise.resolve({ results: allValues[allIdx++] ?? [] }));
-
-  const stmt = {
-    bind: vi.fn().mockReturnThis(),
-    run: vi.fn().mockResolvedValue({ success: true, meta: {} }),
-    first,
-    all,
-  };
-
-  return {
-    db: { prepare: vi.fn().mockReturnValue(stmt) } as unknown as D1Database,
-    stmt,
-    first,
-    all,
-  };
-}
-
 function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
-  const { db, stmt, first, all } = makeDB(firstValues, allValues);
+  const prisma = createPrismaMock(firstValues, allValues);
+  vi.mocked(getPrisma).mockReturnValue(prisma);
+
   return {
     env: {
-      DB: db,
+      DB: {} as D1Database,
       ASSETS: {} as Fetcher,
       APP_URL: "https://example.com",
       AWS_REGION: "us-east-1",
@@ -51,9 +27,6 @@ function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
       AWS_SECRET_ACCESS_KEY: "",
       GOOGLE_MAPS_API_KEY: "",
     } satisfies CloudflareBindings,
-    stmt,
-    first,
-    all,
   };
 }
 

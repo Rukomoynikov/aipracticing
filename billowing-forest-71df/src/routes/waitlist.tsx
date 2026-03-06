@@ -1,11 +1,13 @@
 import { Hono } from "hono";
 import { sendEmail } from "../lib/ses";
 import { confirmationEmail } from "../lib/emailTemplates";
+import { getPrisma } from "../lib/prisma";
 
 const waitlist = new Hono<{ Bindings: CloudflareBindings }>();
 
 waitlist.post("/api/signup", async (c) => {
   try {
+    const prisma = getPrisma(c.env.DB);
     const formData = await c.req.raw.formData();
 
     const name = String(formData.get("name") || "").trim();
@@ -18,38 +20,13 @@ waitlist.post("/api/signup", async (c) => {
 
     const createdAt = new Date().toISOString();
 
-    await c.env.DB.prepare(
-      `CREATE TABLE IF NOT EXISTS signups (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT NOT NULL,
-        interest TEXT,
-        created_at TEXT NOT NULL,
-        source_ip TEXT,
-        user_agent TEXT
-      )`
-    ).run();
-
-    // Add confirmation columns if they don't exist yet
-    for (const stmt of [
-      "ALTER TABLE signups ADD COLUMN confirmation_token TEXT",
-      "ALTER TABLE signups ADD COLUMN confirmed INTEGER DEFAULT 0",
-    ]) {
-      try {
-        await c.env.DB.prepare(stmt).run();
-      } catch {
-        // Column already exists — ignore
-      }
-    }
-
     // Check for existing signup
-    const existing = await c.env.DB.prepare(
-      "SELECT id, confirmed FROM signups WHERE email = ?1 LIMIT 1"
-    )
-      .bind(email)
-      .first<{ id: number; confirmed: number }>();
+    const existing = await prisma.signup.findFirst({
+      where: { email },
+      select: { id: true, confirmed: true },
+    });
 
-    if (existing && existing.confirmed === 1) {
+    if (existing && existing.confirmed === true) {
       return c.json({
         ok: true,
         message: "You're already confirmed — see you at the next session!",
@@ -60,26 +37,23 @@ waitlist.post("/api/signup", async (c) => {
 
     if (existing) {
       // Resend confirmation
-      await c.env.DB.prepare(
-        "UPDATE signups SET confirmation_token = ?1 WHERE id = ?2"
-      )
-        .bind(token, existing.id)
-        .run();
+      await prisma.signup.update({
+        where: { id: existing.id },
+        data: { confirmationToken: token },
+      });
     } else {
-      await c.env.DB.prepare(
-        `INSERT INTO signups (name, email, interest, created_at, source_ip, user_agent, confirmation_token, confirmed)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 0)`
-      )
-        .bind(
-          name || null,
+      await prisma.signup.create({
+        data: {
+          name: name || null,
           email,
-          interest || null,
+          interest: interest || null,
           createdAt,
-          c.req.raw.headers.get("CF-Connecting-IP") || null,
-          c.req.raw.headers.get("User-Agent") || null,
-          token
-        )
-        .run();
+          sourceIp: c.req.raw.headers.get("CF-Connecting-IP") || null,
+          userAgent: c.req.raw.headers.get("User-Agent") || null,
+          confirmationToken: token,
+          confirmed: false,
+        },
+      });
     }
 
     const confirmUrl = `${c.env.APP_URL}/api/confirm?token=${token}`;
@@ -114,6 +88,7 @@ waitlist.post("/api/signup", async (c) => {
 });
 
 waitlist.get("/api/confirm", async (c) => {
+  const prisma = getPrisma(c.env.DB);
   const token = c.req.query("token");
 
   const errorPage = (message: string) =>
@@ -147,22 +122,20 @@ waitlist.get("/api/confirm", async (c) => {
     return errorPage("No confirmation token provided.");
   }
 
-  const row = await c.env.DB.prepare(
-    "SELECT id, confirmed FROM signups WHERE confirmation_token = ?1 LIMIT 1"
-  )
-    .bind(token)
-    .first<{ id: number; confirmed: number }>();
+  const row = await prisma.signup.findFirst({
+    where: { confirmationToken: token },
+    select: { id: true, confirmed: true },
+  });
 
   if (!row) {
     return errorPage("This confirmation link is invalid or has already been used.");
   }
 
-  if (row.confirmed !== 1) {
-    await c.env.DB.prepare(
-      "UPDATE signups SET confirmed = 1 WHERE id = ?1"
-    )
-      .bind(row.id)
-      .run();
+  if (row.confirmed !== true) {
+    await prisma.signup.update({
+      where: { id: row.id },
+      data: { confirmed: true },
+    });
   }
 
   return c.html(`<!DOCTYPE html>

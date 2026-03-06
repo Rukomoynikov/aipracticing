@@ -1,30 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { Hono } from "hono";
 import waitlist from "./waitlist";
+import { getPrisma } from "../lib/prisma";
+import { createPrismaMock } from "../test/prismaMock";
 
 vi.mock("../lib/ses", () => ({ sendEmail: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("../lib/prisma", () => ({ getPrisma: vi.fn() }));
 
 // first() calls in POST /api/signup:
 //   #1 existing signup check
 // first() calls in GET /api/confirm:
 //   #1 row lookup by token
-function makeDB(firstValues: unknown[] = []) {
-  let fi = 0;
-  const first = vi.fn().mockImplementation(() => Promise.resolve(firstValues[fi++] ?? null));
-  const stmt = {
-    bind: vi.fn().mockReturnThis(),
-    run: vi.fn().mockResolvedValue({ success: true }),
-    first,
-    all: vi.fn().mockResolvedValue({ results: [] }),
-  };
-  return { db: { prepare: vi.fn().mockReturnValue(stmt) } as unknown as D1Database };
-}
-
 function makeEnv(firstValues: unknown[] = []) {
-  const { db } = makeDB(firstValues);
+  const prisma = createPrismaMock(firstValues);
+  vi.mocked(getPrisma).mockReturnValue(prisma);
+
   return {
     env: {
-      DB: db,
+      DB: {} as D1Database,
       ASSETS: {} as Fetcher,
       APP_URL: "https://example.com",
       AWS_REGION: "us-east-1",

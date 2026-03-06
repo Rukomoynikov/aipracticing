@@ -9,6 +9,31 @@ npm run dev        # Start local dev server via wrangler
 npm run deploy     # Deploy to Cloudflare Workers (minified)
 npm run cf-typegen # Regenerate worker-configuration.d.ts from wrangler config
 npm run typecheck  # TypeScript check without emitting
+npm run prisma:generate # Regenerate Prisma client
+npm run db:verify:remote # Verify required remote DB columns before deploy
+```
+
+## Database Migrations (D1 + Prisma)
+
+- `prisma/bootstrap.sql` is for initializing an empty local database only.
+- For all future schema changes, use Wrangler D1 migrations (do not edit runtime code to run DDL, and do not use `bootstrap.sql` as a migration mechanism).
+
+Recommended flow for schema changes:
+
+```bash
+# 1) Create migration
+npx wrangler d1 migrations create ai-together-signups <migration_name>
+
+# 2) Edit generated SQL in migrations/
+
+# 3) Apply + test locally
+npx wrangler d1 migrations apply ai-together-signups --local
+npm test
+
+# 4) Apply remotely, verify, deploy
+npx wrangler d1 migrations apply ai-together-signups --remote
+npm run db:verify:remote
+npm run deploy
 ```
 
 ## Architecture

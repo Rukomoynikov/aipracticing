@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { renderToString } from "react-dom/server";
-import { ensureTables } from "../lib/db";
 import { SESSION_COOKIE, setSessionCookie, clearSessionCookie } from "../lib/session";
 import {
   hashPassword,
@@ -13,6 +12,7 @@ import {
 } from "../lib/auth";
 import { sendEmail } from "../lib/ses";
 import { confirmationEmail, passwordResetEmail } from "../lib/emailTemplates";
+import { getPrisma } from "../lib/prisma";
 import SignupPage from "../components/auth/SignupPage";
 import LoginPage from "../components/auth/LoginPage";
 import ForgotPasswordPage from "../components/auth/ForgotPasswordPage";
@@ -30,7 +30,7 @@ auth.get("/signup", (c) => {
 
 auth.post("/api/auth/signup", async (c) => {
   try {
-    await ensureTables(c.env.DB);
+    const prisma = getPrisma(c.env.DB);
 
     const formData = await c.req.raw.formData();
     const name = String(formData.get("name") || "").trim();
@@ -50,11 +50,10 @@ auth.post("/api/auth/signup", async (c) => {
     if (password.length < 8) return renderError("Password must be at least 8 characters.");
     if (password !== confirmPassword) return renderError("Passwords do not match.");
 
-    const existing = await c.env.DB.prepare(
-      "SELECT id FROM users WHERE email = ?1 LIMIT 1"
-    )
-      .bind(email)
-      .first<{ id: number }>();
+    const existing = await prisma.user.findFirst({
+      where: { email },
+      select: { id: true },
+    });
 
     if (existing) {
       return renderError("An account with this email already exists.");
@@ -64,12 +63,16 @@ auth.post("/api/auth/signup", async (c) => {
     const token = generateToken();
     const createdAt = new Date().toISOString();
 
-    await c.env.DB.prepare(
-      `INSERT INTO users (name, email, password_hash, confirmed, confirmation_token, created_at)
-       VALUES (?1, ?2, ?3, 0, ?4, ?5)`
-    )
-      .bind(name, email, passwordHash, token, createdAt)
-      .run();
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        confirmed: false,
+        confirmationToken: token,
+        createdAt,
+      },
+    });
 
     const confirmUrl = `${c.env.APP_URL}/api/auth/confirm?token=${token}`;
 
@@ -106,25 +109,23 @@ auth.get("/api/auth/confirm", async (c) => {
 
   if (!token) return c.redirect("/login?error=missing_token");
 
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
 
-  const user = await c.env.DB.prepare(
-    "SELECT id, confirmed FROM users WHERE confirmation_token = ?1 LIMIT 1"
-  )
-    .bind(token)
-    .first<{ id: number; confirmed: number }>();
+  const user = await prisma.user.findFirst({
+    where: { confirmationToken: token },
+    select: { id: true, confirmed: true },
+  });
 
   if (!user) return c.redirect("/login?error=invalid_token");
 
-  if (user.confirmed !== 1) {
-    await c.env.DB.prepare(
-      "UPDATE users SET confirmed = 1, confirmation_token = NULL WHERE id = ?1"
-    )
-      .bind(user.id)
-      .run();
+  if (user.confirmed !== true) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { confirmed: true, confirmationToken: null },
+    });
   }
 
-  const sessionToken = await createSession(c.env.DB, user.id);
+  const sessionToken = await createSession(prisma, user.id);
   setSessionCookie(c, sessionToken);
   return c.redirect("/dashboard");
 });
@@ -157,7 +158,7 @@ auth.get("/login", (c) => {
 });
 
 auth.post("/api/auth/login", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
 
   const formData = await c.req.raw.formData();
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -172,22 +173,27 @@ auth.post("/api/auth/login", async (c) => {
 
   if (!email || !password) return renderError("Please fill in all fields.");
 
-  const user = await c.env.DB.prepare(
-    "SELECT id, name, email, password_hash, confirmed FROM users WHERE email = ?1 LIMIT 1"
-  )
-    .bind(email)
-    .first<{ id: number; name: string; email: string; password_hash: string; confirmed: number }>();
+  const user = await prisma.user.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      passwordHash: true,
+      confirmed: true,
+    },
+  });
 
   if (!user) return renderError("Invalid email or password.");
 
-  const valid = await verifyPassword(password, user.password_hash);
+  const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return renderError("Invalid email or password.");
 
-  if (user.confirmed !== 1) {
+  if (user.confirmed !== true) {
     return renderError("Please confirm your email before signing in.");
   }
 
-  const token = await createSession(c.env.DB, user.id);
+  const token = await createSession(prisma, user.id);
   setSessionCookie(c, token);
   return c.redirect("/dashboard");
 });
@@ -195,9 +201,10 @@ auth.post("/api/auth/login", async (c) => {
 // ── Logout ───────────────────────────────────────────────────────────────────
 
 auth.post("/api/auth/logout", async (c) => {
+  const prisma = getPrisma(c.env.DB);
   const token = getCookie(c, SESSION_COOKIE);
   if (token) {
-    await deleteSession(c.env.DB, token);
+    await deleteSession(prisma, token);
   }
   clearSessionCookie(c);
   return c.redirect("/login");
@@ -206,12 +213,12 @@ auth.post("/api/auth/logout", async (c) => {
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 auth.get("/dashboard", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
 
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return c.redirect("/login");
 
-  const user = await getSession(c.env.DB, token);
+  const user = await getSession(prisma, token);
   if (!user) {
     clearSessionCookie(c);
     return c.redirect("/login");
@@ -229,7 +236,7 @@ auth.get("/forgot-password", (c) => {
 });
 
 auth.post("/api/auth/forgot-password", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
 
   const formData = await c.req.raw.formData();
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -241,22 +248,23 @@ auth.post("/api/auth/forgot-password", async (c) => {
     return c.html(`<!DOCTYPE html>${html}`, 400);
   }
 
-  const user = await c.env.DB.prepare(
-    "SELECT id FROM users WHERE email = ?1 AND confirmed = 1 LIMIT 1"
-  )
-    .bind(email)
-    .first<{ id: number }>();
+  const user = await prisma.user.findFirst({
+    where: { email, confirmed: true },
+    select: { id: true },
+  });
 
   // Always show success to prevent email enumeration
   if (user) {
     const resetToken = generateToken();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
-    await c.env.DB.prepare(
-      "UPDATE users SET reset_token = ?1, reset_token_expires = ?2 WHERE id = ?3"
-    )
-      .bind(resetToken, expiresAt, user.id)
-      .run();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpires: expiresAt,
+      },
+    });
 
     const resetUrl = `${c.env.APP_URL}/reset-password?token=${resetToken}`;
 
@@ -293,13 +301,19 @@ auth.get("/reset-password", async (c) => {
     return c.html(`<!DOCTYPE html>${html}`, 400);
   }
 
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const now = new Date().toISOString();
-  const user = await c.env.DB.prepare(
-    "SELECT id FROM users WHERE reset_token = ?1 AND reset_token_expires > ?2 LIMIT 1"
-  )
-    .bind(token, now)
-    .first<{ id: number }>();
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpires: {
+        gt: now,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (!user) {
     const html = renderToString(
@@ -316,7 +330,7 @@ auth.get("/reset-password", async (c) => {
 });
 
 auth.post("/api/auth/reset-password", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
 
   const formData = await c.req.raw.formData();
   const token = String(formData.get("token") || "");
@@ -333,27 +347,38 @@ auth.post("/api/auth/reset-password", async (c) => {
   if (password !== confirmPassword) return renderError("Passwords do not match.");
 
   const now = new Date().toISOString();
-  const user = await c.env.DB.prepare(
-    "SELECT id FROM users WHERE reset_token = ?1 AND reset_token_expires > ?2 LIMIT 1"
-  )
-    .bind(token, now)
-    .first<{ id: number }>();
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpires: {
+        gt: now,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (!user) {
     return renderError("This reset link is invalid or has expired. Please request a new one.");
   }
 
   const passwordHash = await hashPassword(password);
-  await c.env.DB.prepare(
-    "UPDATE users SET password_hash = ?1, reset_token = NULL, reset_token_expires = NULL WHERE id = ?2"
-  )
-    .bind(passwordHash, user.id)
-    .run();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      resetToken: null,
+      resetTokenExpires: null,
+    },
+  });
 
   // Invalidate all existing sessions for security
-  await c.env.DB.prepare("DELETE FROM sessions WHERE user_id = ?1")
-    .bind(user.id)
-    .run();
+  await prisma.session.deleteMany({
+    where: {
+      userId: user.id,
+    },
+  });
 
   return c.redirect("/login?confirmed=1");
 });

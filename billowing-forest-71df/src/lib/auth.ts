@@ -1,3 +1,5 @@
+import type { AppPrismaClient } from "./prisma";
+
 const PBKDF2_ITERATIONS = 100_000;
 const SALT_LENGTH = 16;
 const HASH_LENGTH = 32;
@@ -60,37 +62,57 @@ export function generateToken(): string {
 
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
-export async function createSession(db: D1Database, userId: number): Promise<string> {
+export async function createSession(prisma: AppPrismaClient, userId: number): Promise<string> {
   const token = generateToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString();
   const createdAt = new Date().toISOString();
-  await db
-    .prepare(
-      "INSERT INTO sessions (user_id, token, expires_at, created_at) VALUES (?1, ?2, ?3, ?4)"
-    )
-    .bind(userId, token, expiresAt, createdAt)
-    .run();
+  await prisma.session.create({
+    data: {
+      userId,
+      token,
+      expiresAt,
+      createdAt,
+    },
+  });
   return token;
 }
 
-export async function deleteSession(db: D1Database, token: string): Promise<void> {
-  await db.prepare("DELETE FROM sessions WHERE token = ?1").bind(token).run();
+export async function deleteSession(prisma: AppPrismaClient, token: string): Promise<void> {
+  await prisma.session.deleteMany({ where: { token } });
 }
 
 export async function getSession(
-  db: D1Database,
+  prisma: AppPrismaClient,
   token: string
 ): Promise<{ id: number; name: string; email: string; role: string } | null> {
   const now = new Date().toISOString();
-  const row = await db
-    .prepare(
-      `SELECT u.id, u.name, u.email, COALESCE(u.role, 'user') as role
-       FROM sessions s
-       JOIN users u ON u.id = s.user_id
-       WHERE s.token = ?1 AND s.expires_at > ?2 AND u.confirmed = 1
-       LIMIT 1`
-    )
-    .bind(token, now)
-    .first<{ id: number; name: string; email: string; role: string }>();
-  return row ?? null;
+  const row = await prisma.session.findFirst({
+    where: {
+      token,
+      expiresAt: {
+        gt: now,
+      },
+      user: {
+        confirmed: true,
+      },
+    },
+    select: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!row?.user) return null;
+  return {
+    id: row.user.id,
+    name: row.user.name,
+    email: row.user.email,
+    role: row.user.role ?? "user",
+  };
 }

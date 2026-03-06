@@ -1,30 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { Hono } from "hono";
 import home from "./home";
+import { getPrisma } from "../lib/prisma";
+import { createPrismaMock } from "../test/prismaMock";
 
 vi.mock("../lib/ses", () => ({ sendEmail: vi.fn() }));
+vi.mock("../lib/prisma", () => ({ getPrisma: vi.fn() }));
 
 // first() calls in home route (no session cookie):
 //   #1 nextEvent query
 // first() calls with session cookie:
 //   #1 getSession, #2 nextEvent, #3 isSignedUp check (only when user+event both non-null)
-function makeDB(firstValues: unknown[] = []) {
-  let fi = 0;
-  const first = vi.fn().mockImplementation(() => Promise.resolve(firstValues[fi++] ?? null));
-  const stmt = {
-    bind: vi.fn().mockReturnThis(),
-    run: vi.fn().mockResolvedValue({ success: true }),
-    first,
-    all: vi.fn().mockResolvedValue({ results: [] }),
-  };
-  return { db: { prepare: vi.fn().mockReturnValue(stmt) } as unknown as D1Database };
-}
+function makeEnv(firstValues: unknown[] = [], allValues: unknown[][] = []) {
+  const prisma = createPrismaMock(firstValues, allValues);
+  vi.mocked(getPrisma).mockReturnValue(prisma);
 
-function makeEnv(firstValues: unknown[] = []) {
-  const { db } = makeDB(firstValues);
   return {
     env: {
-      DB: db,
+      DB: {} as D1Database,
       ASSETS: {} as Fetcher,
       APP_URL: "https://example.com",
       AWS_REGION: "us-east-1",

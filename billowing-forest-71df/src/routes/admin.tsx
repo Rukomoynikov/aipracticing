@@ -1,9 +1,9 @@
 import { Hono, type Context } from "hono";
 import { getCookie } from "hono/cookie";
 import { renderToString } from "react-dom/server";
-import { ensureTables } from "../lib/db";
 import { SESSION_COOKIE, clearSessionCookie } from "../lib/session";
 import { getSession } from "../lib/auth";
+import { getPrisma } from "../lib/prisma";
 import AdminDashboardPage from "../components/auth/AdminDashboardPage";
 import CreateEventPage from "../components/auth/CreateEventPage";
 import EventsListPage from "../components/auth/EventsListPage";
@@ -15,7 +15,8 @@ const admin = new Hono<{ Bindings: CloudflareBindings }>();
 async function requireAdmin(c: Context<{ Bindings: CloudflareBindings }>) {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return { user: null, redirect: "/login" as const };
-  const user = await getSession(c.env.DB, token);
+  const prisma = getPrisma(c.env.DB);
+  const user = await getSession(prisma, token);
   if (!user) {
     clearSessionCookie(c);
     return { user: null, redirect: "/login" as const };
@@ -27,7 +28,6 @@ async function requireAdmin(c: Context<{ Bindings: CloudflareBindings }>) {
 // ── Admin Dashboard ───────────────────────────────────────────────────────────
 
 admin.get("/dashboard/admin", async (c) => {
-  await ensureTables(c.env.DB);
   const { user, redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
@@ -38,7 +38,6 @@ admin.get("/dashboard/admin", async (c) => {
 // ── Create Event ──────────────────────────────────────────────────────────────
 
 admin.get("/dashboard/admin/events/new", async (c) => {
-  await ensureTables(c.env.DB);
   const { user, redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
@@ -47,7 +46,7 @@ admin.get("/dashboard/admin/events/new", async (c) => {
 });
 
 admin.post("/api/admin/events", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { user, redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
@@ -86,12 +85,19 @@ admin.post("/api/admin/events", async (c) => {
   if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
 
   const createdAt = new Date().toISOString();
-  await c.env.DB.prepare(
-    `INSERT INTO events (title, description, datetime, latitude, longitude, capacity, location_name, created_by, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
-  )
-    .bind(title, description || null, datetime, latitude, longitude, capacity, locationName || null, user!.id, createdAt)
-    .run();
+  await prisma.event.create({
+    data: {
+      title,
+      description: description || null,
+      dateTime: datetime,
+      latitude,
+      longitude,
+      capacity,
+      locationName: locationName || null,
+      createdBy: user!.id,
+      createdAt,
+    },
+  });
 
   return c.redirect("/dashboard/admin");
 });
@@ -99,23 +105,43 @@ admin.post("/api/admin/events", async (c) => {
 // ── Events List ───────────────────────────────────────────────────────────────
 
 admin.get("/dashboard/admin/events", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const success = c.req.query("success");
 
-  const events = await c.env.DB.prepare(
-    `SELECT e.id, e.title, e.datetime, e.capacity,
-            COUNT(es.id) as signupCount
-     FROM events e
-     LEFT JOIN event_signups es ON es.event_id = e.id AND es.confirmed = 1
-     GROUP BY e.id
-     ORDER BY e.datetime DESC`
-  ).all<{ id: number; title: string; datetime: string; capacity: number; signupCount: number }>();
+  const eventsRows = await prisma.event.findMany({
+    orderBy: {
+      dateTime: "desc",
+    },
+    select: {
+      id: true,
+      title: true,
+      dateTime: true,
+      capacity: true,
+      _count: {
+        select: {
+          signups: {
+            where: {
+              confirmed: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const events = eventsRows.map((event) => ({
+    id: event.id,
+    title: event.title,
+    datetime: event.dateTime,
+    capacity: event.capacity,
+    signupCount: event._count.signups,
+  }));
 
   const html = renderToString(
-    <EventsListPage events={events.results} success={success ?? undefined} />
+    <EventsListPage events={events} success={success ?? undefined} />
   );
   return c.html(`<!DOCTYPE html>${html}`);
 });
@@ -123,23 +149,33 @@ admin.get("/dashboard/admin/events", async (c) => {
 // ── Edit Event ────────────────────────────────────────────────────────────────
 
 admin.get("/dashboard/admin/events/:id/edit", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { user, redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);
   if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
 
-  const event = await c.env.DB.prepare(
-    "SELECT id, title, description, datetime, latitude, longitude, capacity, location_name FROM events WHERE id = ?1 LIMIT 1"
-  )
-    .bind(eventId)
-    .first<{ id: number; title: string; description: string | null; datetime: string; latitude: number; longitude: number; capacity: number; location_name: string | null }>();
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      dateTime: true,
+      latitude: true,
+      longitude: true,
+      capacity: true,
+      locationName: true,
+    },
+  });
 
   if (!event) return c.redirect("/dashboard/admin/events");
 
   // datetime-local input needs format: YYYY-MM-DDTHH:mm
-  const dtLocal = event.datetime.slice(0, 16);
+  const dtLocal = event.dateTime.slice(0, 16);
 
   const html = renderToString(
     <EditEventPage
@@ -153,7 +189,7 @@ admin.get("/dashboard/admin/events/:id/edit", async (c) => {
         capacity: String(event.capacity),
         latitude: String(event.latitude),
         longitude: String(event.longitude),
-        locationName: event.location_name ?? "",
+        locationName: event.locationName ?? "",
       }}
     />
   );
@@ -163,16 +199,21 @@ admin.get("/dashboard/admin/events/:id/edit", async (c) => {
 // ── Update Event ──────────────────────────────────────────────────────────────
 
 admin.post("/api/admin/events/:id", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { user, redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);
   if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
 
-  const existing = await c.env.DB.prepare("SELECT id FROM events WHERE id = ?1 LIMIT 1")
-    .bind(eventId)
-    .first<{ id: number }>();
+  const existing = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+    },
+  });
   if (!existing) return c.redirect("/dashboard/admin/events");
 
   const formData = await c.req.raw.formData();
@@ -210,12 +251,20 @@ admin.post("/api/admin/events/:id", async (c) => {
   const capacity = parseInt(capacityStr, 10);
   if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
 
-  await c.env.DB.prepare(
-    `UPDATE events SET title = ?1, description = ?2, datetime = ?3, latitude = ?4, longitude = ?5, capacity = ?6, location_name = ?7
-     WHERE id = ?8`
-  )
-    .bind(title, description || null, datetime, latitude, longitude, capacity, locationName || null, eventId)
-    .run();
+  await prisma.event.update({
+    where: {
+      id: eventId,
+    },
+    data: {
+      title,
+      description: description || null,
+      dateTime: datetime,
+      latitude,
+      longitude,
+      capacity,
+      locationName: locationName || null,
+    },
+  });
 
   return c.redirect("/dashboard/admin/events?success=Event%20updated%20successfully.");
 });
@@ -223,14 +272,22 @@ admin.post("/api/admin/events/:id", async (c) => {
 // ── Delete Event ──────────────────────────────────────────────────────────────
 
 admin.post("/api/admin/events/:id/delete", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);
   if (!isNaN(eventId)) {
-    await c.env.DB.prepare("DELETE FROM event_signups WHERE event_id = ?1").bind(eventId).run();
-    await c.env.DB.prepare("DELETE FROM events WHERE id = ?1").bind(eventId).run();
+    await prisma.eventSignup.deleteMany({
+      where: {
+        eventId,
+      },
+    });
+    await prisma.event.deleteMany({
+      where: {
+        id: eventId,
+      },
+    });
   }
 
   return c.redirect("/dashboard/admin/events?success=Event%20deleted.");
@@ -239,32 +296,64 @@ admin.post("/api/admin/events/:id/delete", async (c) => {
 // ── Event Signups ─────────────────────────────────────────────────────────────
 
 admin.get("/dashboard/admin/events/:id/signups", async (c) => {
-  await ensureTables(c.env.DB);
+  const prisma = getPrisma(c.env.DB);
   const { redirect } = await requireAdmin(c);
   if (redirect) return c.redirect(redirect);
 
   const eventId = parseInt(c.req.param("id"), 10);
   if (isNaN(eventId)) return c.redirect("/dashboard/admin/events");
 
-  const event = await c.env.DB.prepare(
-    "SELECT id, title, datetime, capacity FROM events WHERE id = ?1 LIMIT 1"
-  )
-    .bind(eventId)
-    .first<{ id: number; title: string; datetime: string; capacity: number }>();
+  const eventRow = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+    },
+    select: {
+      id: true,
+      title: true,
+      dateTime: true,
+      capacity: true,
+    },
+  });
 
-  if (!event) return c.redirect("/dashboard/admin/events");
+  if (!eventRow) return c.redirect("/dashboard/admin/events");
 
-  const signups = await c.env.DB.prepare(
-    `SELECT id, name, email, confirmed, created_at
-     FROM event_signups
-     WHERE event_id = ?1
-     ORDER BY confirmed DESC, created_at ASC`
-  )
-    .bind(eventId)
-    .all<{ id: number; name: string; email: string; confirmed: number; created_at: string }>();
+  const signupsRows = await prisma.eventSignup.findMany({
+    where: {
+      eventId,
+    },
+    orderBy: [
+      {
+        confirmed: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      confirmed: true,
+      createdAt: true,
+    },
+  });
+
+  const event = {
+    id: eventRow.id,
+    title: eventRow.title,
+    datetime: eventRow.dateTime,
+    capacity: eventRow.capacity,
+  };
+  const signups = signupsRows.map((signup) => ({
+    id: signup.id,
+    name: signup.name,
+    email: signup.email,
+    confirmed: signup.confirmed ? 1 : 0,
+    created_at: signup.createdAt,
+  }));
 
   const html = renderToString(
-    <EventSignupsPage event={event} signups={signups.results} />
+    <EventSignupsPage event={event} signups={signups} />
   );
   return c.html(`<!DOCTYPE html>${html}`);
 });
