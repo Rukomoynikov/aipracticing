@@ -107,6 +107,7 @@ waitlist.get("/api/confirm", async (c) => {
     h1 { margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #18181b; }
     p { margin: 0; font-size: 15px; color: #52525b; line-height: 1.6; }
   </style>
+  <script async src="https://futureplans.app/sdk.js" data-site-key="fp_site_ed47c72fd18009d53acc0285"></script>
 </head>
 <body>
   <div class="card">
@@ -153,6 +154,7 @@ waitlist.get("/api/confirm", async (c) => {
     h1 { margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #18181b; }
     p { margin: 0; font-size: 15px; color: #52525b; line-height: 1.6; }
   </style>
+  <script async src="https://futureplans.app/sdk.js" data-site-key="fp_site_ed47c72fd18009d53acc0285"></script>
 </head>
 <body>
   <div class="card">

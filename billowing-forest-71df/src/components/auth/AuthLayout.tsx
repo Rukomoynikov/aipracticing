@@ -171,6 +171,7 @@ const AuthLayout: FC<AuthLayoutProps> = ({ title, children }) => (
           margin-top: 4px;
         }
       `}</style>
+      <script async src="https://futureplans.app/sdk.js" data-site-key="fp_site_ed47c72fd18009d53acc0285"></script>
     </head>
     <body>
       <div className="auth-wrap">

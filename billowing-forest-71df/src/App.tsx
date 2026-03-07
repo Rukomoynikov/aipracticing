@@ -147,6 +147,7 @@ const App: FC<{
       <meta name="twitter:title" content="AI Together — London AI practice club" />
       <meta name="twitter:description" content="A small, friendly London community (10–15 people) meeting fortnightly to practice AI tools together. Beginner-friendly, free, and hands-on." />
       <meta name="twitter:image" content="https://aitogether.club/og-image.jpg" />
+      <script async src="https://futureplans.app/sdk.js" data-site-key="fp_site_ed47c72fd18009d53acc0285"></script>
     </head>
     <body>
       <div className="page">
