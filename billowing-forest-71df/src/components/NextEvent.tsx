@@ -17,16 +17,6 @@ export interface CurrentUser {
   email: string;
 }
 
-const mapScript = (lat: number, lng: number) => `
-(function () {
-  var map = L.map('next-event-map', { zoomControl: true, dragging: true, scrollWheelZoom: false }).setView([${lat}, ${lng}], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '\u00a9 OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
-  L.marker([${lat}, ${lng}]).addTo(map);
-})();
-`;
 
 const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null; isSignedUp: boolean }> = ({
   event,
@@ -56,11 +46,6 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null; isSigne
 
   return (
     <section id="next-event" className="section">
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        crossOrigin=""
-      />
       <div className="section-head">
         <h2 className="h2">Next event</h2>
         <p className="sub">Join us for our upcoming AI practice session.</p>
@@ -118,10 +103,14 @@ const NextEvent: FC<{ event: EventData; currentUser: CurrentUser | null; isSigne
             {event.location_name && (
               <p className="next-event-map-label">{event.location_name}</p>
             )}
-            <div id="next-event-map" className="next-event-map"></div>
+            <img
+              id="next-event-map-img"
+              src={`/api/maps/${event.id}`}
+              className="next-event-map"
+              alt={event.location_name ?? "Event location"}
+            />
+            <script dangerouslySetInnerHTML={{ __html: "document.getElementById('next-event-map-img').onerror=function(){this.style.display='none'};" }} />
           </div>
-          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin=""></script>
-          <script dangerouslySetInnerHTML={{ __html: mapScript(event.latitude, event.longitude) }} />
         </div>
 
         <div className="next-event-form-wrap">

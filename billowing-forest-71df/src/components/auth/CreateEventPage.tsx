@@ -16,46 +16,7 @@ interface CreateEventPageProps {
   };
 }
 
-const mapInitScript = `
-(function () {
-  var latInput = document.getElementById('ev-lat');
-  var lngInput = document.getElementById('ev-lng');
-  var hint = document.getElementById('map-hint');
-  var latVal = latInput.value;
-  var lngVal = lngInput.value;
-  var hasPin = latVal !== '' && lngVal !== '';
-  var defaultLat = hasPin ? parseFloat(latVal) : 20;
-  var defaultLng = hasPin ? parseFloat(lngVal) : 0;
-  var defaultZoom = hasPin ? 12 : 2;
-
-  window._evMap = L.map('event-map').setView([defaultLat, defaultLng], defaultZoom);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '\u00a9 OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(window._evMap);
-
-  window._evMarker = null;
-  if (hasPin) {
-    window._evMarker = L.marker([parseFloat(latVal), parseFloat(lngVal)]).addTo(window._evMap);
-    hint.textContent = 'Selected: ' + latVal + ', ' + lngVal;
-  }
-
-  window._evMap.on('click', function (e) {
-    var lat = e.latlng.lat.toFixed(6);
-    var lng = e.latlng.lng.toFixed(6);
-    latInput.value = lat;
-    lngInput.value = lng;
-    hint.textContent = 'Selected: ' + lat + ', ' + lng;
-    if (window._evMarker) {
-      window._evMarker.setLatLng(e.latlng);
-    } else {
-      window._evMarker = L.marker(e.latlng).addTo(window._evMap);
-    }
-  });
-})();
-`;
-
-const autocompleteInitScript = `
+const autocompleteInitScript = (apiKey: string) => `
 function initAutocomplete() {
   var input = document.getElementById('address-search');
   var autocomplete = new google.maps.places.Autocomplete(input, {
@@ -75,30 +36,26 @@ function initAutocomplete() {
     if (nameInput && !nameInput.value) {
       nameInput.value = place.name || '';
     }
-    var latlng = L.latLng(lat, lng);
-    if (window._evMarker) {
-      window._evMarker.setLatLng(latlng);
-    } else {
-      window._evMarker = L.marker(latlng).addTo(window._evMap);
-    }
-    window._evMap.setView(latlng, 15);
+    var img = document.getElementById('map-preview');
+    img.src = 'https://maps.googleapis.com/maps/api/staticmap?center=' + latStr + ',' + lngStr
+      + '&zoom=14&size=1200x560&scale=1&markers=color:red%7C' + latStr + ',' + lngStr
+      + '&key=${apiKey}';
+    img.style.display = 'block';
   });
 }
 `;
 
 const CreateEventPage: FC<CreateEventPageProps> = ({ mapsApiKey, error, values }) => {
   const hasMapsApiKey = mapsApiKey.trim().length > 0;
+  const hasCoords = !!(values?.latitude && values?.longitude);
+  const initialMapSrc = hasCoords && hasMapsApiKey
+    ? `https://maps.googleapis.com/maps/api/staticmap?center=${values!.latitude},${values!.longitude}&zoom=14&size=1200x560&scale=1&markers=color:red%7C${values!.latitude},${values!.longitude}&key=${mapsApiKey}`
+    : "";
 
   return (
     <AuthLayout title="Create Event">
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        crossOrigin=""
-      />
-
       <h1 className="auth-heading">Create Event</h1>
-      <p className="auth-sub">Fill in the details and pin the location on the map.</p>
+      <p className="auth-sub">Fill in the details and search for the location.</p>
 
       {error && <div className="auth-banner auth-banner-error">{error}</div>}
 
@@ -180,19 +137,24 @@ const CreateEventPage: FC<CreateEventPageProps> = ({ mapsApiKey, error, values }
               Address autocomplete is disabled because GOOGLE_MAPS_API_KEY is not configured.
             </p>
           )}
-          <div
-            id="event-map"
+          <img
+            id="map-preview"
+            src={initialMapSrc || undefined}
             style={{
+              display: hasCoords ? "block" : "none",
+              width: "100%",
               height: 280,
               borderRadius: 12,
               border: "1px solid rgba(23,32,42,0.14)",
+              objectFit: "cover",
             }}
+            alt="Location preview"
           />
           <p
             id="map-hint"
             style={{ fontSize: 12, color: "var(--muted)", marginTop: 6, marginBottom: 0 }}
           >
-            No location selected yet.
+            {hasCoords ? `Selected: ${values!.latitude}, ${values!.longitude}` : "No location selected yet."}
           </p>
           <input type="hidden" name="latitude" id="ev-lat" defaultValue={values?.latitude ?? ""} />
           <input type="hidden" name="longitude" id="ev-lng" defaultValue={values?.longitude ?? ""} />
@@ -216,9 +178,7 @@ const CreateEventPage: FC<CreateEventPageProps> = ({ mapsApiKey, error, values }
         ← Back to Admin
       </a>
 
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin="" />
-      <script dangerouslySetInnerHTML={{ __html: mapInitScript }} />
-      {hasMapsApiKey && <script dangerouslySetInnerHTML={{ __html: autocompleteInitScript }} />}
+      {hasMapsApiKey && <script dangerouslySetInnerHTML={{ __html: autocompleteInitScript(mapsApiKey) }} />}
       {hasMapsApiKey && (
         <script
           src={`https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=places&callback=initAutocomplete`}

@@ -4,6 +4,7 @@ import { renderToString } from "react-dom/server";
 import { SESSION_COOKIE, clearSessionCookie } from "../lib/session";
 import { getSession } from "../lib/auth";
 import { getPrisma } from "../lib/prisma";
+import { generateAndStoreMapImage } from "../lib/mapImage";
 import AdminDashboardPage from "../components/auth/AdminDashboardPage";
 import CreateEventPage from "../components/auth/CreateEventPage";
 import EventsListPage from "../components/auth/EventsListPage";
@@ -85,7 +86,7 @@ admin.post("/api/admin/events", async (c) => {
   if (!capacityStr || isNaN(capacity) || capacity < 1) return renderError("Capacity must be at least 1.");
 
   const createdAt = new Date().toISOString();
-  await prisma.event.create({
+  const created = await prisma.event.create({
     data: {
       title,
       description: description || null,
@@ -98,6 +99,10 @@ admin.post("/api/admin/events", async (c) => {
       createdAt,
     },
   });
+
+  try {
+    await generateAndStoreMapImage(created.id, latitude, longitude, c.env.GOOGLE_MAPS_API_KEY, c.env.MAP_IMAGES);
+  } catch {}
 
   return c.redirect("/dashboard/admin");
 });
@@ -266,6 +271,10 @@ admin.post("/api/admin/events/:id", async (c) => {
     },
   });
 
+  try {
+    await generateAndStoreMapImage(eventId, latitude, longitude, c.env.GOOGLE_MAPS_API_KEY, c.env.MAP_IMAGES);
+  } catch {}
+
   return c.redirect("/dashboard/admin/events?success=Event%20updated%20successfully.");
 });
 
@@ -356,6 +365,21 @@ admin.get("/dashboard/admin/events/:id/signups", async (c) => {
     <EventSignupsPage event={event} signups={signups} />
   );
   return c.html(`<!DOCTYPE html>${html}`);
+});
+
+// ── Map Image Serving ─────────────────────────────────────────────────────────
+
+admin.get("/api/maps/:eventId", async (c) => {
+  const eventId = parseInt(c.req.param("eventId"), 10);
+  if (isNaN(eventId)) return c.notFound();
+  const obj = await c.env.MAP_IMAGES.get(`event-${eventId}.png`);
+  if (!obj) return c.notFound();
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 });
 
 export default admin;
